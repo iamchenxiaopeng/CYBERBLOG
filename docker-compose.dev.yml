@@ -1,0 +1,81 @@
+# ============================================
+# CyberBlog 开发环境 Docker 配置
+# ============================================
+# 只启动中间件服务（MySQL、Redis、MinIO）
+# 前后端在本地运行，方便调试
+# ============================================
+# 使用方式：
+#   docker-compose -f docker-compose.dev.yml up -d
+#   docker-compose -f docker-compose.dev.yml down
+# ============================================
+
+services:
+  # ──────────────────────────────────────────────────────
+  # MySQL 数据库
+  # ──────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: cyberblog-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: cyberblog123
+      MYSQL_DATABASE: cyberblog
+      MYSQL_USER: cyberblog
+      MYSQL_PASSWORD: cyberblog123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/src/main/resources/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pcyberblog123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ──────────────────────────────────────────────────────
+  # Redis 缓存
+  # ──────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cyberblog-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ──────────────────────────────────────────────────────
+  # MinIO 对象存储
+  # ──────────────────────────────────────────────────────
+  minio:
+    image: minio/minio
+    container_name: cyberblog-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
