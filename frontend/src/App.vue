@@ -1,8 +1,13 @@
 <template>
   <div id="app-root">
+    <!-- 动态背景 -->
+    <CyberBackground />
+    
     <NavBar />
     <main class="main-content">
-      <RouterView />
+      <PageTransition>
+        <RouterView />
+      </PageTransition>
     </main>
     <footer class="cyber-footer">
       <div class="page-container">
@@ -17,6 +22,8 @@
 <script setup lang="ts">
 import NavBar from '@/components/NavBar.vue'
 import Toast from '@/components/Toast.vue'
+import CyberBackground from '@/components/CyberBackground.vue'
+import PageTransition from '@/components/PageTransition.vue'
 
 const year = new Date().getFullYear()
 </script>

@@ -1,30 +1,37 @@
 <template>
   <div class="list-view page-container">
     <div class="list-header">
-      <h1 class="neon">// 文章数据库</h1>
-      <div class="search-bar">
+      <h1 class="neon animate-slide-up">// 文章数据库</h1>
+      <div class="search-bar animate-slide-up delay-100">
         <input
           v-model="keyword"
           class="cyber-input"
           placeholder="搜索文章标题或摘要..."
           @keyup.enter="search"
         />
-        <button class="btn-cyber" @click="search">检索</button>
+        <button class="btn-cyber btn-animate" @click="search">检索</button>
       </div>
     </div>
 
     <div v-if="loading" class="loading">
+      <div class="loader"></div>
       <span class="neon">FETCHING DATA...</span>
     </div>
     <template v-else>
       <div class="articles-grid">
-        <ArticleCard v-for="article in articles" :key="article.id" :article="article" />
+        <ArticleCard 
+          v-for="(article, index) in articles" 
+          :key="article.id" 
+          :article="article"
+          class="animate-slide-up"
+          :style="{ animationDelay: `${0.1 + index * 0.05}s` }"
+        />
       </div>
       <div v-if="articles.length === 0" class="empty">
         <span class="neon-pink">// NO DATA FOUND //</span>
       </div>
       <!-- Pagination -->
-      <div v-if="total > 0" class="pagination">
+      <div v-if="total > 0" class="pagination animate-slide-up" :style="{ animationDelay: `${0.2 + articles.length * 0.05}s` }">
         <button class="btn-cyber btn-cyber-sm" :disabled="page <= 1" @click="changePage(page - 1)">
           &lt; PREV
         </button>

@@ -2,6 +2,80 @@
    CYBERBLOG - Cyberpunk Theme
    ============================ */
 
+/* 动画关键帧 */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(0, 245, 255, 0.3),
+                0 0 10px rgba(0, 245, 255, 0.2),
+                0 0 20px rgba(0, 245, 255, 0.1);
+  }
+  50% { 
+    box-shadow: 0 0 10px rgba(0, 245, 255, 0.5),
+                0 0 20px rgba(0, 245, 255, 0.3),
+                0 0 40px rgba(0, 245, 255, 0.2);
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow: 
+      0 0 12px rgba(0, 245, 255, 0.8),
+      0 0 30px rgba(0, 245, 255, 0.5),
+      0 0 60px rgba(0, 245, 255, 0.3);
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink {
+  0%, 100% { border-color: var(--cyber-primary); }
+  50% { border-color: transparent; }
+}
+
+@keyframes border-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 :root {
   --cyber-bg: #050508;
   --cyber-bg-card: #0d0d14;
@@ -41,39 +115,6 @@ body {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--cyber-bg); }
 ::-webkit-scrollbar-thumb { background: var(--cyber-primary); border-radius: 3px; }
-
-/* ---- Scanline overlay ---- */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.15) 2px,
-    rgba(0,0,0,0.15) 4px
-  );
-  pointer-events: none;
-  z-index: 9999;
-}
-
-/* ---- Moving scan beam ---- */
-@keyframes scanbeam {
-  0%   { top: -4px; }
-  100% { top: 100vh; }
-}
-body::after {
-  content: '';
-  position: fixed;
-  left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--cyber-primary), transparent);
-  opacity: 0.25;
-  animation: scanbeam 12s linear infinite;
-  pointer-events: none;
-  z-index: 9999;
-}
 
 /* ---- Neon text ---- */
 .neon { color: var(--cyber-primary); text-shadow: var(--cyber-glow); }
@@ -303,6 +344,199 @@ textarea.cyber-input { resize: vertical; min-height: 200px; }
 .cyber-corners::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
 .cyber-corners::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 
+/* ---- Glow border animation ---- */
+.glow-border {
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  padding: 2px;
+  background: linear-gradient(90deg, 
+    var(--cyber-primary), 
+    var(--cyber-secondary), 
+    var(--cyber-primary));
+  background-size: 300% 300%;
+  animation: borderRotate 4s linear infinite;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  border-radius: 4px;
+}
+
+@keyframes borderRotate {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* ---- Orbiting glow dot animation ---- */
+.orbiting-border {
+  position: relative;
+}
+
+.orbiting-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: 
+    linear-gradient(var(--cyber-bg-card) 0 0) padding-box,
+    linear-gradient(90deg, 
+      var(--cyber-primary), 
+      var(--cyber-secondary),
+      var(--cyber-accent),
+      var(--cyber-primary)) border-box;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.orbiting-border::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--cyber-primary);
+  border-radius: 50%;
+  top: -6px;
+  left: -6px;
+  box-shadow: 
+    0 0 10px var(--cyber-primary),
+    0 0 20px var(--cyber-primary),
+    0 0 30px var(--cyber-primary);
+  animation: orbit 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes orbit {
+  0% {
+    top: -6px;
+    left: -6px;
+    box-shadow: 
+      0 0 10px var(--cyber-primary),
+      0 0 20px var(--cyber-primary),
+      0 0 30px var(--cyber-primary);
+  }
+  25% {
+    top: -6px;
+    left: calc(100% - 6px);
+    box-shadow: 
+      0 0 10px var(--cyber-secondary),
+      0 0 20px var(--cyber-secondary),
+      0 0 30px var(--cyber-secondary);
+    background: var(--cyber-secondary);
+  }
+  50% {
+    top: calc(100% - 6px);
+    left: calc(100% - 6px);
+    box-shadow: 
+      0 0 10px var(--cyber-accent),
+      0 0 20px var(--cyber-accent),
+      0 0 30px var(--cyber-accent);
+    background: var(--cyber-accent);
+  }
+  75% {
+    top: calc(100% - 6px);
+    left: -6px;
+    box-shadow: 
+      0 0 10px var(--cyber-green),
+      0 0 20px var(--cyber-green),
+      0 0 30px var(--cyber-green);
+    background: var(--cyber-green);
+  }
+  100% {
+    top: -6px;
+    left: -6px;
+    box-shadow: 
+      0 0 10px var(--cyber-primary),
+      0 0 20px var(--cyber-primary),
+      0 0 30px var(--cyber-primary);
+    background: var(--cyber-primary);
+  }
+}
+
+/* ---- Enhanced orbiting border with trail ---- */
+.trail-border {
+  position: relative;
+}
+
+.trail-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  border-radius: 4px;
+}
+
+.trail-border::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--cyber-primary);
+  border-radius: 50%;
+  top: -8px;
+  left: -8px;
+  animation: trailOrbit 2s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes trailOrbit {
+  0% {
+    top: -8px;
+    left: -8px;
+    opacity: 1;
+    box-shadow: 
+      0 0 0 0 rgba(0, 245, 255, 0.8),
+      0 0 20px var(--cyber-primary),
+      0 0 40px var(--cyber-primary);
+  }
+  25% {
+    top: -8px;
+    left: calc(100% - 8px);
+    box-shadow: 
+      0 0 0 0 rgba(255, 0, 255, 0.8),
+      0 0 20px var(--cyber-secondary),
+      0 0 40px var(--cyber-secondary);
+    background: var(--cyber-secondary);
+  }
+  50% {
+    top: calc(100% - 8px);
+    left: calc(100% - 8px);
+    box-shadow: 
+      0 0 0 0 rgba(255, 230, 0, 0.8),
+      0 0 20px var(--cyber-accent),
+      0 0 40px var(--cyber-accent);
+    background: var(--cyber-accent);
+  }
+  75% {
+    top: calc(100% - 8px);
+    left: -8px;
+    box-shadow: 
+      0 0 0 0 rgba(0, 255, 65, 0.8),
+      0 0 20px var(--cyber-green),
+      0 0 40px var(--cyber-green);
+    background: var(--cyber-green);
+  }
+  100% {
+    top: -8px;
+    left: -8px;
+    opacity: 1;
+    box-shadow: 
+      0 0 0 0 rgba(0, 245, 255, 0.8),
+      0 0 20px var(--cyber-primary),
+      0 0 40px var(--cyber-primary);
+    background: var(--cyber-primary);
+  }
+}
+
 /* ---- Progress bar ---- */
 .reading-bar {
   position: fixed;
@@ -364,3 +598,193 @@ textarea.cyber-input { resize: vertical; min-height: 200px; }
   .grid-2 { grid-template-columns: 1fr; }
   .page-container { padding: 0 16px; }
 }
+
+/* ============================================
+   动态动画类
+   ============================================ */
+
+/* 浮动动画 */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* 脉冲光晕 */
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* 霓虹闪烁 */
+.animate-neon-flicker {
+  animation: neon-flicker 3s ease-in-out infinite;
+}
+
+/* 旋转 */
+.animate-rotate {
+  animation: rotate 10s linear infinite;
+}
+
+/* 滑入 */
+.animate-slide-up {
+  animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 缩放 */
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 打字机效果 */
+.typing-effect {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing 3s steps(20) forwards,
+             blink 0.8s step-end infinite;
+  border-right: 2px solid var(--cyber-primary);
+}
+
+/* 边框流动 */
+.animate-border-flow {
+  background: linear-gradient(90deg, 
+    var(--cyber-primary), 
+    var(--cyber-secondary), 
+    var(--cyber-primary));
+  background-size: 200% 100%;
+  animation: border-flow 3s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 悬停效果增强 */
+.btn-animate {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-animate::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 245, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.btn-animate:hover::before {
+  left: 100%;
+}
+
+.btn-animate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 245, 255, 0.3);
+}
+
+/* 卡片悬停3D效果 */
+.animate-card-3d {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.animate-card-3d:hover {
+  transform: translateY(-8px) rotateX(2deg);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(0, 245, 255, 0.1);
+}
+
+/* 延迟动画类 */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+.delay-700 { animation-delay: 0.7s; }
+.delay-800 { animation-delay: 0.8s; }
+
+/* 加载动画 */
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 3px solid var(--cyber-border);
+  border-top-color: var(--cyber-primary);
+  border-radius: 50%;
+  animation: rotate 1s linear infinite;
+}
+
+/* 涟漪效果 */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(0, 245, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple-effect:active::after {
+  width: 300px;
+  height: 300px;
+  opacity: 0;
+}
+
+/* 渐变边框 */
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: linear-gradient(90deg, 
+    var(--cyber-primary), 
+    var(--cyber-secondary), 
+    var(--cyber-primary));
+  background-size: 200% 100%;
+  animation: border-flow 3s linear infinite;
+  border-radius: inherit;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* 鼠标跟随光效 */
+.mouse-glow {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    circle,
+    rgba(0, 245, 255, 0.1) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s;
+}
+

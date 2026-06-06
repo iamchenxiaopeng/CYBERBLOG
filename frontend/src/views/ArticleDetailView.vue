@@ -15,7 +15,7 @@
 
       <div class="page-container detail-container">
         <!-- Header -->
-        <header class="article-header cyber-corners">
+        <header class="article-header cyber-corners orbiting-border">
           <div class="article-meta">
             <img :src="article.avatarUrl" class="cyber-avatar" />
             <span class="meta-author neon">{{ article.username }}</span>

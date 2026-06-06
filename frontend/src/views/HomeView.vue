@@ -7,27 +7,27 @@
         <div class="hero-glow"></div>
       </div>
       <div class="page-container hero-content">
-        <div class="hero-badge">
-          <span class="neon">// SYSTEM ONLINE //</span>
+        <div ref="badgeRef" class="hero-badge" :style="badgeStyle">
+          <span class="neon typing-effect">// SYSTEM ONLINE //</span>
         </div>
-        <h1 class="hero-title">
+        <h1 ref="titleRef" class="hero-title" :style="titleStyle">
           <span class="glitch" data-text="CYBERBLOG">CYBERBLOG</span>
         </h1>
-        <p class="hero-subtitle cursor">在数字废墟中，记录人类的光与影</p>
-        <div class="hero-actions">
-          <RouterLink to="/articles" class="btn-cyber">浏览文章</RouterLink>
-          <RouterLink v-if="!userStore.isLoggedIn" to="/register" class="btn-cyber btn-cyber-pink">
+        <p ref="subtitleRef" class="hero-subtitle cursor" :style="subtitleStyle">在数字废墟中，记录人类的光与影</p>
+        <div ref="actionsRef" class="hero-actions" :style="actionsStyle">
+          <RouterLink to="/articles" class="btn-cyber btn-animate">浏览文章</RouterLink>
+          <RouterLink v-if="!userStore.isLoggedIn" to="/register" class="btn-cyber btn-cyber-pink btn-animate">
             接入神经网络
           </RouterLink>
-          <RouterLink v-else to="/write" class="btn-cyber btn-cyber-pink">写作</RouterLink>
+          <RouterLink v-else to="/write" class="btn-cyber btn-cyber-pink btn-animate">写作</RouterLink>
         </div>
-        <div class="hero-stats">
-          <div class="stat">
+        <div ref="statsRef" class="hero-stats" :style="statsStyle">
+          <div class="stat animate-item">
             <span class="stat-num neon">{{ stats.articles }}</span>
             <span class="stat-label">篇文章</span>
           </div>
           <div class="stat-sep">//</div>
-          <div class="stat">
+          <div class="stat animate-item">
             <span class="stat-num neon-pink">{{ stats.users }}</span>
             <span class="stat-label">位作者</span>
           </div>
@@ -37,24 +37,56 @@
 
     <!-- Latest Articles -->
     <section class="latest-section page-container">
-      <div class="section-header">
+      <div ref="sectionHeaderRef" class="section-header" :style="sectionHeaderStyle">
         <h2 class="section-title">
           <span class="neon">></span> 最新日志
         </h2>
-        <RouterLink to="/articles" class="btn-cyber btn-cyber-sm">查看全部</RouterLink>
+        <RouterLink to="/articles" class="btn-cyber btn-cyber-sm btn-animate">查看全部</RouterLink>
       </div>
       <div v-if="loading" class="loading">
+        <div class="loader"></div>
         <span class="neon">LOADING...</span>
       </div>
-      <div v-else class="articles-grid">
-        <ArticleCard v-for="article in articles" :key="article.id" :article="article" />
+      <div v-else ref="articlesGridRef" class="articles-grid">
+        <ArticleCard 
+          v-for="(article, index) in articles" 
+          :key="article.id" 
+          :article="article"
+          :style="getArticleStyle(index)"
+          class="article-card-animate"
+        />
+      </div>
+    </section>
+
+    <!-- 特效展示区域 -->
+    <section class="effects-section page-container">
+      <h2 class="section-title animate-slide-up">
+        <span class="neon">></span> 视觉特效展示
+      </h2>
+      <div class="effects-grid">
+        <div class="effect-card cyber-card gradient-border">
+          <h3 class="effect-title neon animate-neon-flicker">霓虹闪烁</h3>
+          <p class="effect-desc">动态光晕效果</p>
+        </div>
+        <div class="effect-card cyber-card">
+          <h3 class="effect-title neon-pink animate-float">浮动动画</h3>
+          <p class="effect-desc">3D悬浮效果</p>
+        </div>
+        <div class="effect-card cyber-card">
+          <h3 class="effect-title animate-pulse-glow" style="color: var(--cyber-accent);">脉冲光晕</h3>
+          <p class="effect-desc">呼吸灯效果</p>
+        </div>
+        <div class="effect-card cyber-card">
+          <h3 class="effect-title animate-border-flow" style="font-size: 24px;">渐变边框</h3>
+          <p class="effect-desc">流动边框</p>
+        </div>
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { articleApi } from '@/api/article'
 import { useUserStore } from '@/stores/user'
 import ArticleCard from '@/components/ArticleCard.vue'
@@ -65,6 +97,70 @@ const articles = ref<Article[]>([])
 const loading = ref(true)
 const stats = ref({ articles: 0, users: 0 })
 
+// 动画状态
+const isLoaded = ref(false)
+
+// 动画元素引用
+const badgeRef = ref<HTMLElement | null>(null)
+const titleRef = ref<HTMLElement | null>(null)
+const subtitleRef = ref<HTMLElement | null>(null)
+const actionsRef = ref<HTMLElement | null>(null)
+const statsRef = ref<HTMLElement | null>(null)
+const sectionHeaderRef = ref<HTMLElement | null>(null)
+const articlesGridRef = ref<HTMLElement | null>(null)
+
+// 动画样式
+const badgeStyle = computed(() => ({
+  opacity: isLoaded.value ? 1 : 0,
+  transform: isLoaded.value ? 'translateY(0)' : 'translateY(20px)',
+  transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+  transitionDelay: '0.2s'
+}))
+
+const titleStyle = computed(() => ({
+  opacity: isLoaded.value ? 1 : 0,
+  transform: isLoaded.value ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.9)',
+  transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+  transitionDelay: '0.4s'
+}))
+
+const subtitleStyle = computed(() => ({
+  opacity: isLoaded.value ? 1 : 0,
+  transform: isLoaded.value ? 'translateY(0)' : 'translateY(20px)',
+  transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+  transitionDelay: '0.6s'
+}))
+
+const actionsStyle = computed(() => ({
+  opacity: isLoaded.value ? 1 : 0,
+  transform: isLoaded.value ? 'translateY(0)' : 'translateY(20px)',
+  transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+  transitionDelay: '0.8s'
+}))
+
+const statsStyle = computed(() => ({
+  opacity: isLoaded.value ? 1 : 0,
+  transform: isLoaded.value ? 'translateY(0)' : 'translateY(20px)',
+  transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+  transitionDelay: '1s'
+}))
+
+const sectionHeaderStyle = computed(() => ({
+  opacity: isLoaded.value ? 1 : 0,
+  transform: isLoaded.value ? 'translateY(0)' : 'translateY(30px)',
+  transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+  transitionDelay: '0.2s'
+}))
+
+function getArticleStyle(index: number) {
+  return {
+    opacity: isLoaded.value ? 1 : 0,
+    transform: isLoaded.value ? 'translateY(0) scale(1)' : `translateY(${40 + index * 10}px) scale(0.95)`,
+    transition: `all 0.6s cubic-bezier(0.4, 0, 0.2, 1)`,
+    transitionDelay: `${0.3 + index * 0.1}s`
+  }
+}
+
 onMounted(async () => {
   try {
     const res = await articleApi.list(1, 6)
@@ -74,6 +170,10 @@ onMounted(async () => {
     }
   } finally {
     loading.value = false
+    // 触发入场动画
+    setTimeout(() => {
+      isLoaded.value = true
+    }, 100)
   }
 })
 </script>
@@ -159,5 +259,45 @@ onMounted(async () => {
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 24px;
 }
-.loading { text-align: center; padding: 60px; font-family: var(--font-mono); font-size: 14px; letter-spacing: 3px; }
+.loading { 
+  text-align: center; 
+  padding: 60px; 
+  font-family: var(--font-mono); 
+  font-size: 14px; 
+  letter-spacing: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* 特效展示 */
+.effects-section { padding: 60px 24px; }
+.effects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+.effect-card {
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.effect-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 245, 255, 0.1);
+}
+.effect-title {
+  font-family: var(--font-cyber);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.effect-desc {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--cyber-text-muted);
+  letter-spacing: 1px;
+}
 </style>
