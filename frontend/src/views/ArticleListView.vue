@@ -19,12 +19,13 @@
     </div>
     <template v-else>
       <div class="articles-grid">
-        <ArticleCard 
-          v-for="(article, index) in articles" 
-          :key="article.id" 
+        <ArticleCard
+          v-for="(article, index) in articles"
+          :key="article.id"
           :article="article"
           class="animate-slide-up"
           :style="{ animationDelay: `${0.1 + index * 0.05}s` }"
+          @deleted="onArticleDeleted"
         />
       </div>
       <div v-if="articles.length === 0" class="empty">
@@ -80,6 +81,11 @@ function changePage(p: number) {
   page.value = p
   fetchArticles()
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function onArticleDeleted(id: number) {
+  articles.value = articles.value.filter(a => a.id !== id)
+  total.value = Math.max(0, total.value - 1)
 }
 
 onMounted(fetchArticles)

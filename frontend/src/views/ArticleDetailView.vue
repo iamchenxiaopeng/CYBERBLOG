@@ -23,6 +23,12 @@
             <span class="meta-date">{{ formatDate(article.createdAt) }}</span>
             <span class="meta-sep">//</span>
             <span class="meta-views">👁 {{ article.viewCount }}</span>
+            <!-- 删除按钮 -->
+            <button
+              v-if="canDelete"
+              class="btn-detail-delete"
+              @click="handleDeleteArticle"
+            >✕ DELETE ARTICLE</button>
           </div>
           <h1 class="article-title">{{ article.title }}</h1>
           <div class="article-tags">
@@ -158,6 +164,12 @@ const replyTo = ref<number | null>(null)
 const submitting = ref(false)
 const readingProgress = ref(0)
 
+// 是否可删除：已登录 且 (是作者 或 是管理员)
+const canDelete = computed(() => {
+  if (!userStore.user || !article.value) return false
+  return userStore.user.id === article.value.userId || userStore.user.username === 'admin'
+})
+
 // Setup marked
 marked.setOptions({
   highlight: (code: string, lang: string) => {
@@ -251,6 +263,20 @@ async function deleteComment(commentId: number) {
   }
 }
 
+async function handleDeleteArticle() {
+  if (!article.value) return
+  if (!confirm('确定删除这篇文章吗？此操作不可撤销。')) return
+  try {
+    const res = await articleApi.delete(article.value.id)
+    if (res.code === 200) {
+      showToast('文章已删除', 'success')
+      router.push('/')
+    }
+  } catch (e: any) {
+    showToast(e.message || '删除失败', 'error')
+  }
+}
+
 function formatDate(s: string) {
   return new Date(s).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
@@ -321,6 +347,25 @@ function parseTags(tags: string) {
 .comment-time { color: var(--cyber-text-muted); margin-left: auto; }
 .comment-content { font-size: 14px; line-height: 1.6; color: var(--cyber-text); }
 .btn-del { font-family: var(--font-mono); font-size: 10px; color: var(--cyber-red); background: none; border: none; cursor: pointer; }
+
+/* 文章详情页删除按钮 */
+.btn-detail-delete {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--cyber-red);
+  background: rgba(255, 50, 80, 0.08);
+  border: 1px solid rgba(255, 50, 80, 0.25);
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-detail-delete:hover {
+  background: var(--cyber-red);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(255, 50, 80, 0.5);
+}
 .replies { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,245,255,0.08); display: flex; flex-direction: column; gap: 8px; }
 .reply-item { display: flex; align-items: baseline; gap: 8px; font-size: 13px; }
 .reply-form { display: flex; gap: 8px; margin-top: 12px; }

@@ -117,7 +117,13 @@ public class ArticleServiceImpl implements ArticleService {
     public void deleteArticle(Long id, Long userId) {
         Article article = articleMapper.selectById(id);
         if (article == null) throw new BusinessException(404, "文章不存在");
-        if (!article.getUserId().equals(userId)) throw new BusinessException(403, "无权限删除");
+        // 查询当前用户，判断是否管理员（username 为 admin）
+        User currentUser = userMapper.selectById(userId);
+        boolean isAdmin = currentUser != null && "admin".equals(currentUser.getUsername());
+        // 只有文章作者或管理员可以删除
+        if (!article.getUserId().equals(userId) && !isAdmin) {
+            throw new BusinessException(403, "无权限删除");
+        }
         articleMapper.deleteById(id);
     }
 
