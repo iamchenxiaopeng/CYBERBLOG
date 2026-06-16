@@ -211,11 +211,6 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
 async function toggleLike() {
   if (!article.value) return
-  if (!userStore.isLoggedIn) {
-    showToast('请先登录后点赞', 'info')
-    setTimeout(() => router.push('/login'), 1200)
-    return
-  }
   try {
     const res = await likeApi.toggle('article', article.value.id)
     if (res.code === 200) {

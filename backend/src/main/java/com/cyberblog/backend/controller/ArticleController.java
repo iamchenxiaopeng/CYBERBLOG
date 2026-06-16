@@ -27,16 +27,19 @@ public class ArticleController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
-            Authentication auth) {
+            Authentication auth,
+            @RequestHeader(value = "X-Guest-Id", required = false) String guestId) {
         Long userId = auth != null ? (Long) auth.getPrincipal() : null;
-        return Result.ok(articleService.listArticles(page, size, keyword, userId));
+        return Result.ok(articleService.listArticles(page, size, keyword, userId, guestId));
     }
 
     @Operation(summary = "获取文章详情")
     @GetMapping("/{id}")
-    public Result<ArticleVO> get(@PathVariable Long id, Authentication auth) {
+    public Result<ArticleVO> get(@PathVariable Long id,
+                                 Authentication auth,
+                                 @RequestHeader(value = "X-Guest-Id", required = false) String guestId) {
         Long userId = auth != null ? (Long) auth.getPrincipal() : null;
-        return Result.ok(articleService.getArticle(id, userId));
+        return Result.ok(articleService.getArticle(id, userId, guestId));
     }
 
     @Operation(summary = "手写发布文章")

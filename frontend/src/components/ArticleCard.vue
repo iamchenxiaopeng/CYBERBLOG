@@ -26,7 +26,13 @@
         </div>
         <div class="card-stats">
           <span class="stat-item">👁 {{ article.viewCount }}</span>
-          <span class="stat-item">♥ {{ article.likeCount }}</span>
+          <span
+            :class="['stat-item', 'like-btn']"
+            :style="liked ? { color: 'var(--cyber-red)', textShadow: '0 0 8px rgba(255,50,80,0.4)' } : {}"
+            @click.stop="handleLike"
+          >
+            {{ liked ? '♥' : '♡' }} {{ likeCount }}
+          </span>
           <span class="stat-item">💬 {{ article.commentCount }}</span>
         </div>
       </div>
@@ -52,7 +58,21 @@ const props = defineProps<{ article: Article }>()
 
 const router = useRouter()
 const userStore = useUserStore()
+const liked = ref(props.article.liked)
+const likeCount = ref(props.article.likeCount)
 
+async function handleLike(e: MouseEvent) {
+  e.stopPropagation()
+  try {
+    const res = await likeApi.toggle('article', props.article.id)
+    if (res.code === 200) {
+      liked.value = res.data.liked
+      likeCount.value = Math.max(0, likeCount.value + (res.data.liked ? 1 : -1))
+    }
+  } catch (e: any) {
+    showToast(e.message || '操作失败', 'error')
+  }
+}
 // 是否显示删除按钮：已登录 且 (是作者 或 是管理员)
 const canDelete = computed(() => {
   if (!userStore.user) return false
@@ -152,6 +172,13 @@ function parseTags(tags: string) {
   background: var(--cyber-red);
   color: #fff;
   box-shadow: 0 0 12px rgba(255, 50, 80, 0.5);
+}
+
+/* 点赞按钮 */
+.like-btn { cursor: pointer; transition: all 0.2s; }
+.like-btn:hover {
+  color: var(--cyber-red) !important;
+  text-shadow: 0 0 8px rgba(255, 50, 80, 0.4);
 }
 
 .card-title {

@@ -1,5 +1,12 @@
 import request from './request'
 import type { Result, Article, PageResult } from '@/types'
+import { useUserStore } from '@/stores/user'
+import { getGuestId } from '@/utils/guest'
+
+function withGuestHeader() {
+  const userStore = useUserStore()
+  return userStore.isLoggedIn ? {} : { headers: { 'X-Guest-Id': getGuestId() } }
+}
 
 export interface ArticleDTO {
   title: string
@@ -13,9 +20,12 @@ export interface ArticleDTO {
 
 export const articleApi = {
   list: (page = 1, size = 10, keyword?: string) =>
-    request.get<any, Result<PageResult<Article>>>('/articles', { params: { page, size, keyword } }),
+    request.get<any, Result<PageResult<Article>>>('/articles', {
+      params: { page, size, keyword },
+      ...withGuestHeader()
+    }),
   get: (id: number) =>
-    request.get<any, Result<Article>>(`/articles/${id}`),
+    request.get<any, Result<Article>>(`/articles/${id}`, { ...withGuestHeader() }),
   create: (data: ArticleDTO) =>
     request.post<any, Result<Article>>('/articles', data),
   upload: (formData: FormData) =>

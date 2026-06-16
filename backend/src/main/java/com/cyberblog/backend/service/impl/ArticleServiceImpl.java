@@ -32,7 +32,7 @@ public class ArticleServiceImpl implements ArticleService {
     private final MinioService minioService;
 
     @Override
-    public IPage<ArticleVO> listArticles(int page, int size, String keyword, Long currentUserId) {
+    public IPage<ArticleVO> listArticles(int page, int size, String keyword, Long currentUserId, String guestId) {
         Page<Article> pageReq = new Page<>(page, size);
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<Article>()
                 .eq(Article::getStatus, "published")
@@ -41,16 +41,16 @@ public class ArticleServiceImpl implements ArticleService {
             wrapper.and(w -> w.like(Article::getTitle, keyword).or().like(Article::getSummary, keyword));
         }
         IPage<Article> articlePage = articleMapper.selectPage(pageReq, wrapper);
-        return articlePage.convert(a -> toVO(a, currentUserId, false));
+        return articlePage.convert(a -> toVO(a, currentUserId, guestId, false));
     }
 
     @Override
-    public ArticleVO getArticle(Long id, Long currentUserId) {
+    public ArticleVO getArticle(Long id, Long currentUserId, String guestId) {
         Article article = articleMapper.selectById(id);
         if (article == null) throw new BusinessException(404, "文章不存在");
         articleMapper.incrementViewCount(id);
         article.setViewCount(article.getViewCount() + 1);
-        return toVO(article, currentUserId, true);
+        return toVO(article, currentUserId, guestId, true);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class ArticleServiceImpl implements ArticleService {
         article.setLikeCount(0);
         article.setCommentCount(0);
         articleMapper.insert(article);
-        return toVO(article, userId, false);
+        return toVO(article, userId, null, false);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class ArticleServiceImpl implements ArticleService {
             article.setLikeCount(0);
             article.setCommentCount(0);
             articleMapper.insert(article);
-            return toVO(article, userId, false);
+            return toVO(article, userId, null, false);
         } catch (IOException e) {
             throw new BusinessException("文件读取失败: " + e.getMessage());
         }
@@ -110,7 +110,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (dto.getStatus() != null) article.setStatus(dto.getStatus());
         if (dto.getCoverImg() != null) article.setCoverImg(dto.getCoverImg());
         articleMapper.updateById(article);
-        return toVO(article, userId, false);
+        return toVO(article, userId, null, false);
     }
 
     @Override
@@ -135,7 +135,7 @@ public class ArticleServiceImpl implements ArticleService {
         return plain.length() > 200 ? plain.substring(0, 200) + "..." : plain;
     }
 
-    private ArticleVO toVO(Article article, Long currentUserId, boolean withContent) {
+    private ArticleVO toVO(Article article, Long currentUserId, String guestId, boolean withContent) {
         ArticleVO vo = new ArticleVO();
         vo.setId(article.getId());
         vo.setUserId(article.getUserId());
@@ -158,10 +158,16 @@ public class ArticleServiceImpl implements ArticleService {
             vo.setUsername(user.getUsername());
             vo.setAvatarUrl(user.getAvatarUrl());
         }
-        // check liked
+        // check liked: 已登录按 userId 查，未登录按 guestId 查
         if (currentUserId != null) {
             Long likeCount = likeMapper.selectCount(new LambdaQueryWrapper<Like>()
                     .eq(Like::getUserId, currentUserId)
+                    .eq(Like::getTargetId, article.getId())
+                    .eq(Like::getTargetType, "article"));
+            vo.setLiked(likeCount > 0);
+        } else if (guestId != null) {
+            Long likeCount = likeMapper.selectCount(new LambdaQueryWrapper<Like>()
+                    .eq(Like::getGuestId, guestId)
                     .eq(Like::getTargetId, article.getId())
                     .eq(Like::getTargetType, "article"));
             vo.setLiked(likeCount > 0);
