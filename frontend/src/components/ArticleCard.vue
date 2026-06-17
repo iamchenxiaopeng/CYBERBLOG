@@ -46,10 +46,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { articleApi } from '@/api/article'
+import { likeApi } from '@/api/interact'
 import { showToast } from '@/utils/toast'
 import type { Article } from '@/types'
 
