@@ -17,7 +17,7 @@
         <!-- Header -->
         <header class="article-header cyber-corners orbiting-border">
           <div class="article-meta">
-            <img :src="article.avatarUrl" class="cyber-avatar" />
+            <img :src="article.avatarUrl || '/avatar-default.svg'" class="cyber-avatar" @error="(e: Event) => (e.target as HTMLImageElement).src = '/avatar-default.svg'" />
             <span class="meta-author neon">{{ article.username }}</span>
             <span class="meta-sep">//</span>
             <span class="meta-date">{{ formatDate(article.createdAt) }}</span>
@@ -99,7 +99,7 @@
           <div class="comment-list">
             <div v-for="comment in comments" :key="comment.id" class="comment-item cyber-card">
               <div class="comment-header">
-                <img :src="comment.avatarUrl" class="cyber-avatar" />
+                <img :src="comment.avatarUrl || '/avatar-default.svg'" class="cyber-avatar" @error="(e: Event) => (e.target as HTMLImageElement).src = '/avatar-default.svg'" />
                 <span class="comment-author neon">{{ comment.username }}</span>
                 <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
                 <button
@@ -112,7 +112,7 @@
               <!-- Replies -->
               <div v-if="comment.replies?.length" class="replies">
                 <div v-for="reply in comment.replies" :key="reply.id" class="reply-item">
-                  <img :src="reply.avatarUrl" class="cyber-avatar" style="width:26px;height:26px" />
+                  <img :src="reply.avatarUrl || '/avatar-default.svg'" class="cyber-avatar" style="width:26px;height:26px" @error="(e: Event) => (e.target as HTMLImageElement).src = '/avatar-default.svg'" />
                   <span class="comment-author neon" style="font-size:11px">{{ reply.username }}</span>
                   <span class="comment-content">{{ reply.content }}</span>
                 </div>

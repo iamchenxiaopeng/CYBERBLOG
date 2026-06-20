@@ -27,16 +27,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { authApi } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const loading = ref(false)
 const error = ref('')
 const form = ref({ username: '', password: '' })
+
+// 如果是从过期跳转来的，显示提示
+onMounted(() => {
+  if (route.query.expired) {
+    error.value = '登录已过期，请重新登录'
+  }
+})
 
 async function submit() {
   error.value = ''
@@ -45,7 +53,9 @@ async function submit() {
     const res = await authApi.login(form.value)
     if (res.code === 200) {
       userStore.setAuth(res.data.token, res.data.user)
-      router.push('/')
+      // 登录后跳回之前要访问的页面
+      const redirect = route.query.redirect as string
+      router.push(redirect || '/')
     } else {
       error.value = res.message
     }

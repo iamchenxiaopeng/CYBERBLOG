@@ -30,9 +30,21 @@ public class UserServiceImpl implements UserService {
         if (count > 0) {
             throw new BusinessException("用户名已存在");
         }
+        // check email unique（仅当用户填写了真实邮箱时）
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            Long emailCount = userMapper.selectCount(
+                    new LambdaQueryWrapper<User>().eq(User::getEmail, dto.getEmail()));
+            if (emailCount > 0) {
+                throw new BusinessException("邮箱已被注册");
+            }
+        }
         User user = new User();
         user.setUsername(dto.getUsername());
-        user.setEmail(dto.getEmail());
+        // 邮箱为空时生成唯一占位邮箱，避免 unique 约束冲突
+        String email = (dto.getEmail() != null && !dto.getEmail().isBlank())
+                ? dto.getEmail()
+                : dto.getUsername() + "@cyberblog.local";
+        user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         user.setAvatarUrl("https://api.dicebear.com/7.x/pixel-art/svg?seed=" + dto.getUsername());
         user.setBio("这个人很懒，什么都没留下。");

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a14"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5ff"/>
+      <stop offset="50%" stop-color="#ff00ff"/>
+      <stop offset="100%" stop-color="#00f5ff"/>
+    </linearGradient>
+    <filter id="neon">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- bg circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg)" stroke="url(#glow)" stroke-width="1.5"/>
+  
+  <!-- scan lines -->
+  <line x1="5" y1="30" x2="95" y2="30" stroke="#00f5ff" stroke-opacity="0.15" stroke-width="0.5"/>
+  <line x1="5" y1="45" x2="95" y2="45" stroke="#00f5ff" stroke-opacity="0.1" stroke-width="0.5"/>
+  <line x1="5" y1="60" x2="95" y2="60" stroke="#00f5ff" stroke-opacity="0.1" stroke-width="0.5"/>
+  <line x1="5" y1="75" x2="95" y2="75" stroke="#00f5ff" stroke-opacity="0.15" stroke-width="0.5"/>
+
+  <!-- cyber face outline -->
+  <path d="M30 38 Q35 28 50 27 Q65 28 70 38 L68 55 Q65 64 50 66 Q35 64 32 55 Z"
+        fill="none" stroke="#00f5ff" stroke-width="1.8" filter="url(#neon)"/>
+  
+  <!-- left eye -->
+  <rect x="37" y="42" width="10" height="4" rx="1" fill="#00f5ff" filter="url(#neon)"/>
+  <!-- right eye -->
+  <rect x="53" y="42" width="10" height="4" rx="1" fill="#ff00ff" filter="url(#neon)"/>
+  
+  <!-- eye glow dots -->
+  <circle cx="42" cy="44" r="1.5" fill="#fff"/>
+  <circle cx="58" cy="44" r="1.5" fill="#fff"/>
+  
+  <!-- mouth / visor line -->
+  <line x1="40" y1="56" x2="60" y2="56" stroke="#00f5ff" stroke-width="1.2" filter="url(#neon)" stroke-linecap="round"/>
+  <line x1="43" y1="59" x2="57" y2="59" stroke="#00f5ff" stroke-width="0.6" stroke-opacity="0.5"/>
+  
+  <!-- side circuit decorations -->
+  <rect x="18" y="42" width="3" height="8" rx="0.5" fill="none" stroke="#00f5ff" stroke-width="0.8" stroke-opacity="0.6"/>
+  <rect x="79" y="42" width="3" height="8" rx="0.5" fill="none" stroke="#ff00ff" stroke-width="0.8" stroke-opacity="0.6"/>
+  <circle cx="19.5" cy="52" r="1.2" fill="#00f5ff" opacity="0.7"/>
+  <circle cx="80.5" cy="52" r="1.2" fill="#ff00ff" opacity="0.7"/>
+  
+  <!-- antenna -->
+  <line x1="50" y1="27" x2="50" y2="17" stroke="#00f5ff" stroke-width="1" filter="url(#neon)"/>
+  <circle cx="50" cy="16" r="2.5" fill="#ff00ff" filter="url(#neon)"/>
+</svg>

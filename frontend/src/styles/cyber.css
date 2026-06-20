@@ -180,31 +180,23 @@ body {
   border: 1px solid var(--cyber-primary);
   border-radius: 2px;
   cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-.btn-cyber::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--cyber-primary);
-  transform: translateX(-100%);
-  transition: transform 0.2s;
-  z-index: -1;
+  transition: all 0.25s ease;
 }
 .btn-cyber:hover {
-  color: var(--cyber-bg);
+  background: var(--cyber-primary);
+  color: #050508;
   box-shadow: var(--cyber-glow);
 }
-.btn-cyber:hover::before { transform: translateX(0); }
 
 .btn-cyber-pink {
   color: var(--cyber-secondary);
   border-color: var(--cyber-secondary);
 }
-.btn-cyber-pink::before { background: var(--cyber-secondary); }
-.btn-cyber-pink:hover { box-shadow: var(--cyber-glow-pink); }
+.btn-cyber-pink:hover {
+  background: var(--cyber-secondary);
+  color: #050508;
+  box-shadow: var(--cyber-glow-pink);
+}
 
 .btn-cyber-sm {
   font-size: 10px;

@@ -6,7 +6,7 @@
     </div>
     <div class="card-body">
       <div class="card-meta">
-        <img :src="article.avatarUrl" :alt="article.username" class="cyber-avatar" />
+        <img :src="article.avatarUrl || '/avatar-default.svg'" :alt="article.username" class="cyber-avatar" @error="(e: Event) => (e.target as HTMLImageElement).src = '/avatar-default.svg'" />
         <span class="meta-author">{{ article.username }}</span>
         <span class="meta-sep">//</span>
         <span class="meta-date">{{ formatDate(article.createdAt) }}</span>

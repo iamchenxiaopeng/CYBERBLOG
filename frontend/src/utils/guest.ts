@@ -48,10 +48,13 @@ export function getGuestId(): string {
     return id
   }
 
-  // 3. 都未找到：生成新 ID（指纹 + UUID 防碰撞）
+  // 3. 都未找到：生成新 ID（指纹 + 随机串防碰撞）
   const fingerprint = getBrowserFingerprint()
-  const uuid = crypto.randomUUID()
-  id = `cyber-${fingerprint}-${uuid}`
+  // crypto.randomUUID() 只在 HTTPS/localhost 可用，fallback 用 Math.random
+  const rand = typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('')
+  id = `cyber-${fingerprint}-${rand}`
   localStorage.setItem(STORAGE_KEY, id)
   setCookie(id)
   return id

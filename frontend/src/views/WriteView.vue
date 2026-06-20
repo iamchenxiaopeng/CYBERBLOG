@@ -92,13 +92,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
 import { articleApi } from '@/api/article'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
+
+// 进入页面时检查登录状态（token 可能已过期）
+onMounted(() => {
+  if (!userStore.isLoggedIn) {
+    router.replace('/login?redirect=/write')
+  }
+})
 
 const modes: { key: 'write' | 'upload'; label: string }[] = [
   { key: 'write', label: '手写创作' },
@@ -139,6 +148,11 @@ function handleDrop(e: DragEvent) {
 }
 
 async function submitUpload() {
+  if (!userStore.isLoggedIn) {
+    errorMsg.value = '登录已过期，请重新登录'
+    setTimeout(() => router.push('/login?redirect=/write'), 1500)
+    return
+  }
   if (!selectedFile.value) return
   uploading.value = true
   errorMsg.value = ''
@@ -162,6 +176,11 @@ async function submitUpload() {
 }
 
 async function submitWrite() {
+  if (!userStore.isLoggedIn) {
+    errorMsg.value = '登录已过期，请重新登录'
+    setTimeout(() => router.push('/login?redirect=/write'), 1500)
+    return
+  }
   if (!writeForm.value.title.trim()) {
     errorMsg.value = '请填写文章标题'
     return
