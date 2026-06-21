@@ -38,31 +38,35 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initAdminUser() {
-        Long count = userMapper.selectCount(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<User>()
-                        .eq(User::getUsername, DEFAULT_ADMIN_USERNAME));
-
-        if (count > 0) {
-            log.info("管理员账号已存在，跳过初始化");
-            return;
-        }
-
-        log.info("正在创建默认管理员账号...");
-
         // 密码格式：bcrypt(sha256(明文))，与前端传输前加密保持一致
         String sha256Password = sha256Hex(DEFAULT_ADMIN_PASSWORD);
         String bcryptHash = passwordEncoder.encode(sha256Password);
 
-        User admin = new User();
-        admin.setUsername(DEFAULT_ADMIN_USERNAME);
-        admin.setEmail("admin@cyberblog.local");
-        admin.setPasswordHash(bcryptHash);
-        admin.setAvatarUrl("/avatar-default.svg");
-        admin.setBio("赛博博客系统管理员");
-        admin.setRole("admin");
+        User admin = userMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<User>()
+                        .eq(User::getUsername, DEFAULT_ADMIN_USERNAME));
 
-        userMapper.insert(admin);
-        log.info("默认管理员创建完成 — 用户名: {}, 密码: {} (已 bcrypt(sha256()) 存储)",
+        if (admin == null) {
+            log.info("正在创建默认管理员账号...");
+            admin = new User();
+            admin.setUsername(DEFAULT_ADMIN_USERNAME);
+            admin.setEmail("admin@cyberblog.local");
+            admin.setPasswordHash(bcryptHash);
+            admin.setAvatarUrl("/avatar-default.svg");
+            admin.setBio("赛博博客系统管理员");
+            admin.setRole("admin");
+            userMapper.insert(admin);
+            log.info("默认管理员创建完成 — 用户名: {}", DEFAULT_ADMIN_USERNAME);
+        } else {
+            // 已存在 → 强制更新密码为 bcrypt(sha256(明文)) 格式
+            admin.setPasswordHash(bcryptHash);
+            if (admin.getRole() == null || !"admin".equals(admin.getRole())) {
+                admin.setRole("admin");
+            }
+            userMapper.updateById(admin);
+            log.info("管理员密码已更新为 bcrypt(sha256) 格式 — 用户名: {}", DEFAULT_ADMIN_USERNAME);
+        }
+        log.info("管理员初始化完成 — 用户名: {}, 密码: {} (bcrypt(sha256) 格式)",
                 DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD);
     }
 
