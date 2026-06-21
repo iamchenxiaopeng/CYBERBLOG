@@ -16,7 +16,8 @@
 - Linux 服务器 IP: http://180.76.133.234/
 - 部署方式：`bash start.sh prod`（docker-compose 一键构建启动）
 - 故障排查脚本：`bash fix-login.sh [check|fix|rebuild|logs]`
-- 默认管理员: admin / Admin@2077（BCrypt 加密，DataInitializer 自动创建）
+- 默认管理员: admin / Admin@2077（bcrypt(sha256) 双重加密，DataInitializer 自动创建）
+- 密码方案: 前端 SHA-256 → HTTP 传输 → 后端 BCrypt 存储（js-sha256 库兜底 HTTP 环境）
 
 ## 技术选型
 - ORM：MyBatis-Plus 3.5.7（含分页插件）

@@ -44,10 +44,15 @@ case "$ACTION" in
 
     echo ""
     echo "=== [4/5] 测试登录接口 ==="
+    # 前端现在传输 SHA-256 hash 后的密码，所以这里也用 SHA-256 测试
+    SHA256_PWD=$(echo -n "Admin@2077" | sha256sum 2>/dev/null | awk '{print $1}' || \
+                 python3 -c "import hashlib;print(hashlib.sha256(b'Admin@2077').hexdigest())" 2>/dev/null || \
+                 echo "58746ecce1f92666809aff06d38b7161709581f2fb9fb4015eefda45a6bc0ddd")
+
     LOGIN_RESULT=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST \
       http://localhost:8080/api/auth/login \
       -H "Content-Type: application/json" \
-      -d '{"username":"admin","password":"Admin@2077"}' 2>/dev/null)
+      -d "{\"username\":\"admin\",\"password\":\"$SHA256_PWD\"}" 2>/dev/null)
     HTTP_CODE=$(echo "$LOGIN_RESULT" | grep "HTTP_CODE:" | cut -d: -f2)
     BODY=$(echo "$LOGIN_RESULT" | grep -v "HTTP_CODE:")
 
@@ -78,29 +83,33 @@ case "$ACTION" in
     echo ""
     echo "=== 修复方案：重新初始化管理员账号 ==="
     echo ""
+    echo "注意：新版本前端传输的是 SHA-256(password)，"
+    echo "数据库存储格式为 BCrypt(SHA-256(密码明文))"
+    echo ""
 
-    # 使用 DataInitializer 自动处理（已在代码中实现）
-    # 这里提供一个手动修复选项：直接更新数据库中的密码为 BCrypt hash
+    # Admin@2077 → SHA-256 → BCrypt
+    # SHA-256("Admin@2077") = 58746ecce1f92666809aff06d38b7161709581f2fb9fb4015eefda45a6bc0ddd
+    # BCrypt(上述值) = $2b$10$k3rd0r6.vhlqTbD342cVx.QtPuJ/jowPcnh01UX9ijKitL.qyCn86
+    BCRYPT_HASH='$2b$10$k3rd0r6.vhlqTbD342cVx.QtPuJ/jowPcnh01UX9ijKitL.qyCn86'
 
-    # Admin@2077 的 BCrypt hash（由 PasswordEncoder 生成）
-    BCRYPT_HASH='$2a$10$N9qo8uLOickg2ZmZ.oQ7Iu/ZZq6ZL8pMfEKNBvFZKjKqCqNFYqMNC'
-
-    echo "正在将 admin 密码重置为 BCrypt 格式..."
+    echo "正在将 admin 密码重置为 BCrypt(SHA-256) 格式..."
     docker exec cyberblog-mysql mysql -uroot -pcyberblog123 cyberblog \
       -e "
-        -- 如果 admin 不存在则插入，存在则更新密码
         INSERT INTO users (username, email, password_hash, avatar_url, bio, role, created_at, updated_at)
         VALUES ('admin', 'admin@cyberblog.local', '$BCRYPT_HASH', '/avatar-default.svg', '赛博博客系统管理员', 'admin', NOW(), NOW())
         ON DUPLICATE KEY UPDATE password_hash = '$BCRYPT_HASH', role = 'admin';
       " 2>/dev/null && echo "[OK] 管理员账号已修复" || echo "[ERROR] 修复失败，请检查 MySQL 容器状态"
 
-    # 验证
+    # 验证（用 SHA-256 后的密码测试，模拟前端行为）
     echo ""
-    echo "验证登录..."
+    echo "验证登录（使用 SHA-256 加密后的密码）..."
     sleep 1
+    SHA256_PWD=$(echo -n "Admin@2077" | sha256sum 2>/dev/null | awk '{print $1}' || \
+                 python3 -c "import hashlib;print(hashlib.sha256(b'Admin@2077').hexdigest())" 2>/dev/null || \
+                 echo "58746ecce1f92666809aff06d38b7161709581f2fb9fb4015eefda45a6bc0ddd")
     curl -s -X POST http://localhost:8080/api/auth/login \
       -H "Content-Type: application/json" \
-      -d '{"username":"admin","password":"Admin@2077"}'
+      -d "{\"username\":\"admin\",\"password\":\"$SHA256_PWD\"}"
     ;;
 
   rebuild)
