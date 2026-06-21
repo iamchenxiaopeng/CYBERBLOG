@@ -12,6 +12,12 @@
 - 首次启动约 3-5 分钟（Maven 编译 + npm build）
 - healthcheck 依赖链：MySQL/Redis/MinIO → backend → frontend
 
+## 服务器部署
+- Linux 服务器 IP: http://180.76.133.234/
+- 部署方式：`bash start.sh prod`（docker-compose 一键构建启动）
+- 故障排查脚本：`bash fix-login.sh [check|fix|rebuild|logs]`
+- 默认管理员: admin / Admin@2077（BCrypt 加密，DataInitializer 自动创建）
+
 ## 技术选型
 - ORM：MyBatis-Plus 3.5.7（含分页插件）
 - JWT：jjwt 0.12.6

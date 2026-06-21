@@ -34,6 +34,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api/auth'
+import { encryptPassword } from '@/utils/crypto'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -46,7 +47,13 @@ async function submit() {
   error.value = ''
   loading.value = true
   try {
-    const res = await authApi.register(form.value)
+    // 传输前对密码做 SHA-256 hash
+    const hashedPwd = await encryptPassword(form.value.password)
+    const res = await authApi.register({
+      username: form.value.username,
+      password: hashedPwd,
+      email: form.value.email || undefined,
+    })
     if (res.code === 200) {
       userStore.setAuth(res.data.token, res.data.user)
       router.push('/')

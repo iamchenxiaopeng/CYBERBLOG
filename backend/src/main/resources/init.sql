@@ -1,69 +1,56 @@
--- cyberblog database initialization
+-- CyberBlog 数据库初始化脚本
+-- 由 docker-compose 在 MySQL 首次启动时自动执行
 
-CREATE DATABASE IF NOT EXISTS cyberblog DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE cyberblog;
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    avatar_url VARCHAR(500) DEFAULT '',
+    bio TEXT DEFAULT '',
+    role VARCHAR(20) DEFAULT 'user',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 用户表
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-  `username` VARCHAR(50) NOT NULL UNIQUE,
-  `email` VARCHAR(100) UNIQUE,
-  `password_hash` VARCHAR(255) NOT NULL,
-  `avatar_url` VARCHAR(500) DEFAULT '',
-  `bio` VARCHAR(500) DEFAULT '',
-  `role` VARCHAR(20) DEFAULT 'user',
-  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX `idx_username` (`username`),
-  INDEX `idx_email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS articles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    content LONGTEXT,
+    summary VARCHAR(500) DEFAULT '',
+    cover_image VARCHAR(500) DEFAULT '',
+    keywords VARCHAR(200) DEFAULT '',
+    view_count INT DEFAULT 0,
+    like_count INT DEFAULT 0,
+    status TINYINT DEFAULT 1,
+    deleted INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status),
+    FULLTEXT INDEX ft_title_content (title, content)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 文章表
-CREATE TABLE IF NOT EXISTS `articles` (
-  `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-  `user_id` BIGINT NOT NULL,
-  `title` VARCHAR(200) NOT NULL,
-  `content` LONGTEXT,
-  `content_type` VARCHAR(10) DEFAULT 'markdown',
-  `file_url` VARCHAR(500) DEFAULT '',
-  `cover_img` VARCHAR(500) DEFAULT '',
-  `summary` VARCHAR(500) DEFAULT '',
-  `tags` VARCHAR(300) DEFAULT '',
-  `status` VARCHAR(10) DEFAULT 'published',
-  `view_count` INT DEFAULT 0,
-  `like_count` INT DEFAULT 0,
-  `comment_count` INT DEFAULT 0,
-  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX `idx_user_id` (`user_id`),
-  INDEX `idx_status` (`status`),
-  INDEX `idx_created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    article_id BIGINT NOT NULL,
+    content TEXT NOT NULL,
+    parent_id BIGINT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_article_id (article_id),
+    INDEX idx_parent_id (parent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 评论表
-CREATE TABLE IF NOT EXISTS `comments` (
-  `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-  `article_id` BIGINT NOT NULL,
-  `user_id` BIGINT NOT NULL,
-  `parent_id` BIGINT DEFAULT 0,
-  `content` TEXT NOT NULL,
-  `like_count` INT DEFAULT 0,
-  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX `idx_article_id` (`article_id`),
-  INDEX `idx_user_id` (`user_id`),
-  INDEX `idx_parent_id` (`parent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- 点赞表
-CREATE TABLE IF NOT EXISTS `likes` (
-  `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-  `user_id` BIGINT DEFAULT NULL,
-  `guest_id` VARCHAR(64) DEFAULT NULL,
-  `target_id` BIGINT NOT NULL,
-  `target_type` VARCHAR(20) NOT NULL,
-  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY `uk_like_user` (`user_id`, `target_id`, `target_type`),
-  UNIQUE KEY `uk_like_guest` (`guest_id`, `target_id`, `target_type`),
-  INDEX `idx_target` (`target_id`, `target_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS likes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT DEFAULT NULL,
+    guest_id VARCHAR(100) DEFAULT NULL,
+    target_type ENUM('article', 'comment') NOT NULL,
+    target_id BIGINT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_like (user_id, guest_id, target_type, target_id),
+    INDEX idx_target (target_type, target_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -30,6 +30,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authApi } from '@/api/auth'
+import { encryptPassword } from '@/utils/crypto'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -50,10 +51,14 @@ async function submit() {
   error.value = ''
   loading.value = true
   try {
-    const res = await authApi.login(form.value)
+    // 传输前对密码做 SHA-256 hash，避免明文传输
+    const hashedPwd = await encryptPassword(form.value.password)
+    const res = await authApi.login({
+      username: form.value.username,
+      password: hashedPwd,
+    })
     if (res.code === 200) {
       userStore.setAuth(res.data.token, res.data.user)
-      // 登录后跳回之前要访问的页面
       const redirect = route.query.redirect as string
       router.push(redirect || '/')
     } else {
