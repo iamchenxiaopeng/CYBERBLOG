@@ -1,8 +1,8 @@
 <template>
   <div class="write-view page-container">
     <div class="write-header">
-      <h1 class="neon">// 创作控制台</h1>
-      <div class="mode-tabs">
+      <h1 class="neon">{{ isEditing ? '// 编辑控制台' : '// 创作控制台' }}</h1>
+      <div v-if="!isEditing" class="mode-tabs">
         <button
           v-for="m in modes"
           :key="m.key"
@@ -13,75 +13,87 @@
       </div>
     </div>
 
-    <!-- Upload MD Mode -->
-    <div v-if="mode === 'upload'" class="upload-zone cyber-card cyber-corners" @dragover.prevent @drop.prevent="handleDrop">
-      <div class="upload-inner">
-        <div class="upload-icon neon">⬆</div>
-        <p class="upload-text">拖拽 .md 文件到此处</p>
-        <p class="upload-sub">或</p>
-        <label class="btn-cyber" style="cursor:pointer">
-          选择文件
-          <input type="file" accept=".md" @change="handleFileSelect" style="display:none" />
-        </label>
-        <div v-if="selectedFile" class="file-info">
-          <span class="neon-yellow">// {{ selectedFile.name }}</span>
-        </div>
-      </div>
-
-      <div v-if="selectedFile" class="upload-meta">
-        <hr class="cyber-divider" />
-        <div class="form-group">
-          <label class="cyber-label">文章标题（留空则使用文件名）</label>
-          <input v-model="uploadForm.title" class="cyber-input" placeholder="可选：自定义标题" />
-        </div>
-        <div class="form-group">
-          <label class="cyber-label">标签（逗号分隔）</label>
-          <input v-model="uploadForm.tags" class="cyber-input" placeholder="例: 科技,赛博朋克,AI" />
-        </div>
-        <button class="btn-cyber" @click="submitUpload" :disabled="uploading">
-          {{ uploading ? 'UPLOADING...' : '上传发布' }}
-        </button>
-      </div>
+    <!-- 编辑模式加载中 -->
+    <div v-if="loadingArticle" class="loading-edit">
+      <span class="neon">LOADING ARTICLE DATA...</span>
     </div>
 
-    <!-- Write Mode -->
-    <div v-else class="write-editor cyber-card">
-      <div class="editor-toolbar">
-        <input
-          v-model="writeForm.title"
-          class="cyber-input editor-title"
-          placeholder="文章标题..."
-          required
-        />
-      </div>
-      <div class="editor-meta">
-        <input v-model="writeForm.tags" class="cyber-input" placeholder="标签（逗号分隔）" />
-        <select v-model="writeForm.status" class="cyber-input">
-          <option value="published">发布</option>
-          <option value="draft">草稿</option>
-        </select>
+    <template v-else>
+      <!-- Upload MD Mode (仅新建时可用) -->
+      <div v-if="mode === 'upload'" class="upload-zone cyber-card cyber-corners" @dragover.prevent @drop.prevent="handleDrop">
+        <div class="upload-inner">
+          <div class="upload-icon neon">⬆</div>
+          <p class="upload-text">拖拽 .md 文件到此处</p>
+          <p class="upload-sub">或</p>
+          <label class="btn-cyber" style="cursor:pointer">
+            选择文件
+            <input type="file" accept=".md" @change="handleFileSelect" style="display:none" />
+          </label>
+          <div v-if="selectedFile" class="file-info">
+            <span class="neon-yellow">// {{ selectedFile.name }}</span>
+          </div>
+        </div>
+
+        <div v-if="selectedFile" class="upload-meta">
+          <hr class="cyber-divider" />
+          <div class="form-group">
+            <label class="cyber-label">文章标题（留空则使用文件名）</label>
+            <input v-model="uploadForm.title" class="cyber-input" placeholder="可选：自定义标题" />
+          </div>
+          <div class="form-group">
+            <label class="cyber-label">标签（逗号分隔）</label>
+            <input v-model="uploadForm.tags" class="cyber-input" placeholder="例: 科技,赛博朋克,AI" />
+          </div>
+          <button class="btn-cyber" :class="{ 'btn-loading': uploading }" @click="submitUpload" :disabled="uploading">
+            <span v-if="uploading" class="btn-spinner"></span>
+            {{ uploading ? '上传中...' : '上传发布' }}
+          </button>
+        </div>
       </div>
 
-      <!-- Editor / Preview tabs -->
-      <div class="editor-tabs">
-        <button :class="['tab', { active: editorTab === 'edit' }]" @click="editorTab='edit'">编辑</button>
-        <button :class="['tab', { active: editorTab === 'preview' }]" @click="editorTab='preview'">预览</button>
-      </div>
-      <div v-if="editorTab === 'edit'" class="editor-area">
-        <textarea
-          v-model="writeForm.content"
-          class="cyber-input md-editor"
-          placeholder="支持 Markdown 语法..."
-        ></textarea>
-      </div>
-      <div v-else class="preview-area cyber-prose" v-html="previewHtml"></div>
+      <!-- Write / Edit Mode -->
+      <div v-else class="write-editor cyber-card">
+        <div class="editor-toolbar">
+          <input
+            v-model="writeForm.title"
+            class="cyber-input editor-title"
+            placeholder="文章标题..."
+            required
+          />
+        </div>
+        <div class="editor-meta">
+          <input v-model="writeForm.tags" class="cyber-input" placeholder="标签（逗号分隔）" />
+          <select v-model="writeForm.status" class="cyber-input">
+            <option value="published">发布</option>
+            <option value="draft">草稿</option>
+          </select>
+        </div>
 
-      <div class="editor-actions">
-        <button class="btn-cyber" @click="submitWrite" :disabled="writing">
-          {{ writing ? 'PUBLISHING...' : '发布文章' }}
-        </button>
+        <!-- Editor / Preview tabs -->
+        <div class="editor-tabs">
+          <button :class="['tab', { active: editorTab === 'edit' }]" @click="editorTab='edit'">编辑</button>
+          <button :class="['tab', { active: editorTab === 'preview' }]" @click="editorTab='preview'">预览</button>
+        </div>
+        <div v-if="editorTab === 'edit'" class="editor-area">
+          <textarea
+            v-model="writeForm.content"
+            class="cyber-input md-editor"
+            placeholder="支持 Markdown 语法..."
+          ></textarea>
+        </div>
+        <div v-else class="preview-area cyber-prose" v-html="previewHtml"></div>
+
+        <div class="editor-actions">
+          <button class="btn-cyber" :class="{ 'btn-loading': writing }" @click="submitWrite" :disabled="writing">
+            <span v-if="writing" class="btn-spinner"></span>
+            {{ writing ? (isEditing ? '保存中...' : '发布中...') : (isEditing ? '保存修改' : '发布文章') }}
+          </button>
+          <button v-if="isEditing" class="btn-cyber btn-cyber-sm" style="margin-left:12px" @click="router.back()">
+            取消
+          </button>
+        </div>
       </div>
-    </div>
+    </template>
 
     <div v-if="successMsg" class="success-msg neon-yellow">
       {{ successMsg }}
@@ -93,21 +105,55 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
 import { articleApi } from '@/api/article'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
+// 判断是否编辑模式
+const editId = computed(() => {
+  const id = route.params.id
+  return id ? Number(id) : null
+})
+const isEditing = computed(() => editId.value !== null)
+const loadingArticle = ref(false)
+
 // 进入页面时检查登录状态（token 可能已过期）
-onMounted(() => {
+onMounted(async () => {
   if (!userStore.isLoggedIn) {
-    router.replace('/login?redirect=/write')
+    const redirect = isEditing.value ? `/write/${editId.value}` : '/write'
+    router.replace(`/login?redirect=${redirect}`)
+    return
+  }
+  // 编辑模式：拉取文章数据回填
+  if (isEditing.value && editId.value) {
+    await loadArticle(editId.value)
   }
 })
+
+async function loadArticle(id: number) {
+  loadingArticle.value = true
+  try {
+    const res = await articleApi.get(id)
+    if (res.code === 200 && res.data) {
+      writeForm.value.title = res.data.title || ''
+      writeForm.value.content = res.data.content || ''
+      writeForm.value.tags = res.data.tags || ''
+      writeForm.value.status = res.data.status || 'published'
+    } else {
+      errorMsg.value = '文章加载失败：' + (res.message || '未知错误')
+    }
+  } catch (e: any) {
+    errorMsg.value = '文章加载失败：' + (e.message || '网络错误')
+  } finally {
+    loadingArticle.value = false
+  }
+}
 
 const modes: { key: 'write' | 'upload'; label: string }[] = [
   { key: 'write', label: '手写创作' },
@@ -163,8 +209,8 @@ async function submitUpload() {
     if (uploadForm.value.tags) fd.append('tags', uploadForm.value.tags)
     const res = await articleApi.upload(fd)
     if (res.code === 200) {
-      publishedId.value = res.data.id
-      successMsg.value = '// 文章已上传发布 //'
+      // 上传成功 → 跳转首页
+      router.push('/')
     } else {
       errorMsg.value = res.message
     }
@@ -178,7 +224,8 @@ async function submitUpload() {
 async function submitWrite() {
   if (!userStore.isLoggedIn) {
     errorMsg.value = '登录已过期，请重新登录'
-    setTimeout(() => router.push('/login?redirect=/write'), 1500)
+    const redirect = isEditing.value ? `/write/${editId.value}` : '/write'
+    setTimeout(() => router.push(`/login?redirect=${redirect}`), 1500)
     return
   }
   if (!writeForm.value.title.trim()) {
@@ -188,17 +235,37 @@ async function submitWrite() {
   writing.value = true
   errorMsg.value = ''
   try {
-    const res = await articleApi.create({
-      title: writeForm.value.title,
-      content: writeForm.value.content,
-      tags: writeForm.value.tags,
-      status: writeForm.value.status
-    })
-    if (res.code === 200) {
-      publishedId.value = res.data.id
-      successMsg.value = '// 文章发布成功 //'
+    if (isEditing.value && editId.value) {
+      // 编辑模式：调用 update
+      const res = await articleApi.update(editId.value, {
+        title: writeForm.value.title,
+        content: writeForm.value.content,
+        tags: writeForm.value.tags,
+        status: writeForm.value.status
+      })
+      if (res.code === 200) {
+        publishedId.value = editId.value
+        successMsg.value = '// 文章已更新 //'
+        // 更新成功后跳回文章详情页
+        setTimeout(() => router.push(`/articles/${editId.value}`), 800)
+      } else {
+        errorMsg.value = res.message
+      }
     } else {
-      errorMsg.value = res.message
+      // 新建模式：调用 create
+      const res = await articleApi.create({
+        title: writeForm.value.title,
+        content: writeForm.value.content,
+        tags: writeForm.value.tags,
+        status: writeForm.value.status
+      })
+      if (res.code === 200) {
+        publishedId.value = res.data.id
+        // 发布成功 → 跳转首页
+        router.push('/')
+      } else {
+        errorMsg.value = res.message
+      }
     }
   } catch (e: any) {
     errorMsg.value = e.message
@@ -214,6 +281,8 @@ async function submitWrite() {
 .write-header h1 { font-family: var(--font-cyber); font-size: 22px; letter-spacing: 4px; }
 .mode-tabs { display: flex; gap: 8px; }
 .btn-cyber.active { background: var(--cyber-primary); color: var(--cyber-bg); }
+
+.loading-edit { padding: 80px 24px; text-align: center; font-family: var(--font-mono); font-size: 14px; letter-spacing: 3px; }
 
 /* Upload Zone */
 .upload-zone { padding: 40px; text-align: center; border: 2px dashed var(--cyber-border); transition: border-color 0.2s; }
@@ -247,9 +316,34 @@ async function submitWrite() {
 .editor-area { margin-top: 1px; }
 .md-editor { min-height: 400px; border-radius: 0; border-top: none; font-family: var(--font-mono); font-size: 14px; line-height: 1.7; }
 .preview-area { min-height: 400px; padding: 16px; background: var(--cyber-bg-input); border: 1px solid var(--cyber-border); border-top: none; }
-.editor-actions { margin-top: 16px; }
+.editor-actions { margin-top: 16px; display: flex; align-items: center; }
 
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .success-msg { margin-top: 20px; font-family: var(--font-mono); font-size: 13px; letter-spacing: 2px; }
 .error-msg { margin-top: 20px; color: var(--cyber-red); font-family: var(--font-mono); font-size: 12px; }
+
+/* ── 按钮加载状态 ── */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid rgba(0, 245, 255, 0.3);
+  border-top-color: var(--cyber-primary);
+  border-radius: 50%;
+  animation: cyber-spin 0.6s linear infinite;
+}
+.btn-spinner { display: none; }
+
+@keyframes cyber-spin {
+  to { transform: rotate(360deg); }
+}
 </style>

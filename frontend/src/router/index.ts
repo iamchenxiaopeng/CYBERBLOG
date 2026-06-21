@@ -6,6 +6,7 @@ const routes = [
   { path: '/articles', component: () => import('@/views/ArticleListView.vue') },
   { path: '/articles/:id', component: () => import('@/views/ArticleDetailView.vue') },
   { path: '/write', component: () => import('@/views/WriteView.vue'), meta: { requiresAuth: true } },
+  { path: '/write/:id', component: () => import('@/views/WriteView.vue'), meta: { requiresAuth: true } },
   { path: '/login', component: () => import('@/views/LoginView.vue') },
   { path: '/register', component: () => import('@/views/RegisterView.vue') },
   { path: '/:pathMatch(.*)*', component: () => import('@/views/NotFoundView.vue') }

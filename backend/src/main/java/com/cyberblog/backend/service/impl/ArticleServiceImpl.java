@@ -100,7 +100,12 @@ public class ArticleServiceImpl implements ArticleService {
     public ArticleVO updateArticle(Long id, ArticleDTO dto, Long userId) {
         Article article = articleMapper.selectById(id);
         if (article == null) throw new BusinessException(404, "文章不存在");
-        if (!article.getUserId().equals(userId)) throw new BusinessException(403, "无权限修改");
+        // 查询当前用户，判断是否管理员
+        User currentUser = userMapper.selectById(userId);
+        boolean isAdmin = currentUser != null && "admin".equals(currentUser.getUsername());
+        if (!article.getUserId().equals(userId) && !isAdmin) {
+            throw new BusinessException(403, "无权限修改");
+        }
         if (StringUtils.hasText(dto.getTitle())) article.setTitle(dto.getTitle());
         if (dto.getContent() != null) {
             article.setContent(dto.getContent());

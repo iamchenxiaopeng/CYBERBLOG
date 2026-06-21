@@ -23,12 +23,18 @@
             <span class="meta-date">{{ formatDate(article.createdAt) }}</span>
             <span class="meta-sep">//</span>
             <span class="meta-views">👁 {{ article.viewCount }}</span>
+            <!-- 编辑按钮 -->
+            <button
+              v-if="canEdit"
+              class="btn-detail-edit"
+              @click="router.push(`/write/${article.id}`)"
+            >✎ EDIT</button>
             <!-- 删除按钮 -->
             <button
               v-if="canDelete"
               class="btn-detail-delete"
               @click="handleDeleteArticle"
-            >✕ DELETE ARTICLE</button>
+            >✕ DELETE</button>
           </div>
           <h1 class="article-title">{{ article.title }}</h1>
           <div class="article-tags">
@@ -166,6 +172,12 @@ const readingProgress = ref(0)
 
 // 是否可删除：已登录 且 (是作者 或 是管理员)
 const canDelete = computed(() => {
+  if (!userStore.user || !article.value) return false
+  return userStore.user.id === article.value.userId || userStore.user.username === 'admin'
+})
+
+// 是否可编辑：同删除权限（作者 或 管理员）
+const canEdit = computed(() => {
   if (!userStore.user || !article.value) return false
   return userStore.user.id === article.value.userId || userStore.user.username === 'admin'
 })
@@ -342,6 +354,24 @@ function parseTags(tags: string) {
 .comment-time { color: var(--cyber-text-muted); margin-left: auto; }
 .comment-content { font-size: 14px; line-height: 1.6; color: var(--cyber-text); }
 .btn-del { font-family: var(--font-mono); font-size: 10px; color: var(--cyber-red); background: none; border: none; cursor: pointer; }
+
+/* 文章详情页编辑按钮 */
+.btn-detail-edit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--cyber-primary);
+  background: rgba(0, 245, 255, 0.08);
+  border: 1px solid rgba(0, 245, 255, 0.25);
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-detail-edit:hover {
+  background: var(--cyber-primary);
+  color: var(--cyber-bg);
+  box-shadow: 0 0 16px rgba(0, 245, 255, 0.5);
+}
 
 /* 文章详情页删除按钮 */
 .btn-detail-delete {
