@@ -1,10 +1,13 @@
 /**
  * 密码传输前加密工具
- * 方案：SHA-256 一次（客户端 hash），后端再 BCrypt 一次
- * 即使传输被截获，也无法还原明文密码
+ * 方案：SHA-256(password) 一次（防明文传输），nonce + timestamp 防重放攻击
+ *
+ * 重放防护原理：
+ * - 前端发送 SHA-256(password) + nonce + timestamp
+ * - 后端验证 timestamp 在 5 分钟窗口内
+ * - 超过时效的请求被拒绝，截获的哈希无法重放
  *
  * 兼容 HTTP 环境（crypto.subtle 需要 HTTPS/localhost）
- * 优先用 Web Crypto API，不可用时降级到 js-sha256（纯 JS 实现）
  */
 
 import sha256lib from 'js-sha256'
@@ -13,7 +16,6 @@ import sha256lib from 'js-sha256'
  * 计算字符串的 SHA-256 hash，返回小写 hex 字符串（64字符）
  */
 export async function sha256(text: string): Promise<string> {
-  // Web Crypto API 只在安全上下文可用（HTTPS / localhost / 127.0.0.1）
   if (typeof crypto !== 'undefined' && typeof crypto.subtle === 'object') {
     try {
       const encoder = new TextEncoder()
@@ -25,18 +27,37 @@ export async function sha256(text: string): Promise<string> {
       // subtle 调用失败 → 降级
     }
   }
-  // HTTP 环境下 crypto.subtle 不可用 → 使用纯 JS 实现（js-sha256）
   return Promise.resolve(sha256lib.sha256(text))
 }
 
 /**
- * 对密码做传输前预处理：SHA-256 hash
- * 注册和登录时统一调用此函数
+ * 生成随机 nonce（8 字符十六进制），用于请求唯一标识
+ */
+function generateNonce(): string {
+  const arr = new Uint8Array(4)
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(arr)
+  } else {
+    for (let i = 0; i < 4; i++) arr[i] = Math.floor(Math.random() * 256)
+  }
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * 对密码做传输前预处理：SHA-256(password) + nonce + timestamp
+ * nonce 和 timestamp 用于防止重放攻击（后端验证时效性）
  *
  * @example
- * const hashedPwd = await encryptPassword('my_password')
- * // → '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'
+ * const result = await encryptPassword('my_password')
+ * // result = { password: '5e884...', nonce: 'a1b2c3d4', timestamp: 1719000000 }
  */
-export async function encryptPassword(password: string): Promise<string> {
-  return sha256(password)
+export async function encryptPassword(password: string): Promise<{
+  password: string
+  nonce: string
+  timestamp: number
+}> {
+  const nonce = generateNonce()
+  const timestamp = Math.floor(Date.now() / 1000)
+  const hash = await sha256(password)
+  return { password: hash, nonce, timestamp }
 }

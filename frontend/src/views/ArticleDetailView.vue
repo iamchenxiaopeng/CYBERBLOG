@@ -152,6 +152,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
+import DOMPurify from 'dompurify'
 import { articleApi } from '@/api/article'
 import { commentApi, likeApi } from '@/api/interact'
 import { useUserStore } from '@/stores/user'
@@ -186,23 +187,37 @@ const canEdit = computed(() => {
 const renderer = new marked.Renderer()
 renderer.code = function (code: string, lang: string) {
   const language = lang || 'code'
+  // HTML 转义语言标识符，防止 XSS 注入
   const displayLang = language.toUpperCase()
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  const safeLangClass = language.replace(/[^a-zA-Z0-9_-]/g, '')
   let highlighted: string
   if (lang && hljs.getLanguage(lang)) {
     highlighted = hljs.highlight(code, { language: lang }).value
   } else {
     highlighted = hljs.highlightAuto(code).value
   }
-  // Escape code for safe embedding in data attribute
-  const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-  return `<pre><div class="code-header"><span class="code-lang">${displayLang}</span><button class="btn-copy-code" data-code="${escapedCode}" onclick="copyCodeBlock(this)">COPY</button></div><code class="hljs language-${language}">${highlighted}</code></pre>`
+  const escapedCode = code.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return `<pre><div class="code-header"><span class="code-lang">${displayLang}</span><button class="btn-copy-code" data-code="${escapedCode}" onclick="copyCodeBlock(this)">COPY</button></div><code class="hljs language-${safeLangClass}">${highlighted}</code></pre>`
 }
 
 marked.setOptions({ renderer } as any)
 
 const renderedContent = computed(() => {
   if (!article.value?.content) return ''
-  return marked(article.value.content) as string
+  const rawHtml = marked(article.value.content) as string
+  return DOMPurify.sanitize(rawHtml, {
+    ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br','hr','blockquote','pre','code',
+      'em','strong','del','a','img','ul','ol','li','table','thead','tbody','tr','th','td',
+      'span','div','button','sup','sub','details','summary'],
+    ALLOWED_ATTR: ['class','id','href','src','alt','title','target','rel','data-code',
+      'onclick','style','language','start','colspan','rowspan'],
+    FORBID_TAGS: ['script','style','iframe','form','input','object','embed','applet'],
+    FORBID_ATTR: ['onabort','onblur','onchange','onclick','ondblclick','onerror','onfocus',
+      'onkeydown','onkeypress','onkeyup','onload','onmousedown','onmousemove','onmouseout',
+      'onmouseover','onmouseup','onreset','onresize','onscroll','onselect','onsubmit','onunload']
+  })
 })
 
 function handleScroll() {

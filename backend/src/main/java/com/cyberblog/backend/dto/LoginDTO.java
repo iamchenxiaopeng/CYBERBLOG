@@ -10,4 +10,9 @@ public class LoginDTO {
 
     @NotBlank(message = "密码不能为空")
     private String password;
+
+    @NotBlank(message = "nonce不能为空")
+    private String nonce;
+
+    private Long timestamp;
 }

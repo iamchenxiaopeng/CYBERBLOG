@@ -38,16 +38,16 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initAdminUser() {
-        // 密码格式：bcrypt(sha256(明文))，与前端传输前加密保持一致
-        String sha256Password = sha256Hex(DEFAULT_ADMIN_PASSWORD);
-        String bcryptHash = passwordEncoder.encode(sha256Password);
-
+        // 仅首次创建管理员，已存在则不再干预（防止密码重置后门）
         User admin = userMapper.selectOne(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<User>()
                         .eq(User::getUsername, DEFAULT_ADMIN_USERNAME));
 
         if (admin == null) {
             log.info("正在创建默认管理员账号...");
+            String sha256Password = sha256Hex(DEFAULT_ADMIN_PASSWORD);
+            String bcryptHash = passwordEncoder.encode(sha256Password);
+
             admin = new User();
             admin.setUsername(DEFAULT_ADMIN_USERNAME);
             admin.setEmail("admin@cyberblog.local");
@@ -58,16 +58,13 @@ public class DataInitializer implements CommandLineRunner {
             userMapper.insert(admin);
             log.info("默认管理员创建完成 — 用户名: {}", DEFAULT_ADMIN_USERNAME);
         } else {
-            // 已存在 → 强制更新密码为 bcrypt(sha256(明文)) 格式
-            admin.setPasswordHash(bcryptHash);
+            // 确保角色字段正确（不修改密码）
             if (admin.getRole() == null || !"admin".equals(admin.getRole())) {
                 admin.setRole("admin");
+                userMapper.updateById(admin);
             }
-            userMapper.updateById(admin);
-            log.info("管理员密码已更新为 bcrypt(sha256) 格式 — 用户名: {}", DEFAULT_ADMIN_USERNAME);
+            log.info("管理员账号已存在，跳过初始化");
         }
-        log.info("管理员初始化完成 — 用户名: {}, 密码: {} (bcrypt(sha256) 格式)",
-                DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD);
     }
 
     /**

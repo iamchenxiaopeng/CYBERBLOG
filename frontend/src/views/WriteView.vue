@@ -108,6 +108,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
+import DOMPurify from 'dompurify'
 import { articleApi } from '@/api/article'
 import { useUserStore } from '@/stores/user'
 
@@ -177,14 +178,17 @@ const writeRenderer = new marked.Renderer()
 writeRenderer.code = function (code: string, lang: string) {
   const language = lang || 'code'
   const displayLang = language.toUpperCase()
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  const safeLangClass = language.replace(/[^a-zA-Z0-9_-]/g, '')
   let highlighted: string
   if (lang && hljs.getLanguage(lang)) {
     highlighted = hljs.highlight(code, { language: lang }).value
   } else {
     highlighted = hljs.highlightAuto(code).value
   }
-  const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-  return `<pre><div class="code-header"><span class="code-lang">${displayLang}</span><button class="btn-copy-code" data-code="${escapedCode}" onclick="copyCodeBlock(this)">COPY</button></div><code class="hljs language-${language}">${highlighted}</code></pre>`
+  const escapedCode = code.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return `<pre><div class="code-header"><span class="code-lang">${displayLang}</span><button class="btn-copy-code" data-code="${escapedCode}" onclick="copyCodeBlock(this)">COPY</button></div><code class="hljs language-${safeLangClass}">${highlighted}</code></pre>`
 }
 
 marked.setOptions({ renderer: writeRenderer } as any)
@@ -214,7 +218,18 @@ function copyCodeBlock(btn: HTMLButtonElement) {
 window.copyCodeBlock = copyCodeBlock
 
 const previewHtml = computed(() => {
-  return writeForm.value.content ? marked(writeForm.value.content) as string : '<p style="color:var(--cyber-text-muted)">// 暂无内容 //</p>'
+  const raw = writeForm.value.content ? marked(writeForm.value.content) as string : '<p style="color:var(--cyber-text-muted)">// 暂无内容 //</p>'
+  return DOMPurify.sanitize(raw, {
+    ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br','hr','blockquote','pre','code',
+      'em','strong','del','a','img','ul','ol','li','table','thead','tbody','tr','th','td',
+      'span','div','button','sup','sub','details','summary'],
+    ALLOWED_ATTR: ['class','id','href','src','alt','title','target','rel','data-code',
+      'onclick','style','language','start','colspan','rowspan'],
+    FORBID_TAGS: ['script','style','iframe','form','input','object','embed','applet'],
+    FORBID_ATTR: ['onabort','onblur','onchange','onclick','ondblclick','onerror','onfocus',
+      'onkeydown','onkeypress','onkeyup','onload','onmousedown','onmousemove','onmouseout',
+      'onmouseover','onmouseup','onreset','onresize','onscroll','onselect','onsubmit','onunload']
+  })
 })
 
 function handleFileSelect(e: Event) {

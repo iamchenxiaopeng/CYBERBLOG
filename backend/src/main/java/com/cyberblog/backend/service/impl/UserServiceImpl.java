@@ -7,13 +7,16 @@ import com.cyberblog.backend.dto.RegisterDTO;
 import com.cyberblog.backend.entity.User;
 import com.cyberblog.backend.mapper.UserMapper;
 import com.cyberblog.backend.security.JwtUtil;
+import com.cyberblog.backend.service.RateLimitService;
 import com.cyberblog.backend.service.UserService;
 import com.cyberblog.backend.vo.LoginVO;
 import com.cyberblog.backend.vo.UserVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -21,6 +24,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final RateLimitService rateLimitService;
 
     @Override
     public LoginVO register(RegisterDTO dto) {
@@ -40,7 +44,6 @@ public class UserServiceImpl implements UserService {
         }
         User user = new User();
         user.setUsername(dto.getUsername());
-        // 邮箱为空时生成唯一占位邮箱，避免 unique 约束冲突
         String email = (dto.getEmail() != null && !dto.getEmail().isBlank())
                 ? dto.getEmail()
                 : dto.getUsername() + "@cyberblog.local";
@@ -56,11 +59,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginVO login(LoginDTO dto) {
+        // ── 暴力破解防护 ──
+        // 检查用户名是否被锁定
+        if (rateLimitService.isUserLocked(dto.getUsername())) {
+            long remaining = rateLimitService.getUserLockRemainingSeconds(dto.getUsername());
+            throw new BusinessException("登录失败次数过多，请 " + (remaining / 60 + 1) + " 分钟后再试");
+        }
+
         User user = userMapper.selectOne(
                 new LambdaQueryWrapper<User>().eq(User::getUsername, dto.getUsername()));
         if (user == null || !passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
+            // 记录失败次数
+            rateLimitService.recordLoginFailure(dto.getUsername());
             throw new BusinessException("用户名或密码错误");
         }
+
+        // 登录成功 → 清除失败计数
+        rateLimitService.clearLoginFailure(dto.getUsername());
         String token = jwtUtil.generateToken(user.getId(), user.getUsername());
         return new LoginVO(token, toVO(user));
     }

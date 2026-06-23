@@ -1,8 +1,8 @@
 import request from './request'
 import type { Result, User } from '@/types'
 
-export interface RegisterDTO { username: string; password: string; email?: string }
-export interface LoginDTO { username: string; password: string }
+export interface RegisterDTO { username: string; password: string; nonce: string; timestamp: number; email?: string }
+export interface LoginDTO { username: string; password: string; nonce: string; timestamp: number }
 export interface LoginVO { token: string; user: User }
 
 export const authApi = {

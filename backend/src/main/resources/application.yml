@@ -15,6 +15,7 @@ spring:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
       timeout: 5000ms
       lettuce:
         pool:
@@ -29,7 +30,6 @@ spring:
 
 mybatis-plus:
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: true
   global-config:
     db-config:
@@ -38,7 +38,7 @@ mybatis-plus:
       logic-not-delete-value: 0
 
 jwt:
-  secret: cyberblog-super-secret-key-2024-please-change-in-production-min-256bit
+  secret: ${JWT_SECRET:cyberblog-super-secret-key-2024-please-change-in-production-min-256bit}
   expiration: 86400000  # 24h in ms
 
 minio:
@@ -48,10 +48,10 @@ minio:
   bucket-name: ${MINIO_BUCKET_NAME:cyberblog}
 
 knife4j:
-  enable: true
+  enable: ${KNIFE4J_ENABLE:false}
   setting:
     language: zh_cn
 
 logging:
   level:
-    com.cyberblog: debug
+    com.cyberblog: ${LOG_LEVEL:info}

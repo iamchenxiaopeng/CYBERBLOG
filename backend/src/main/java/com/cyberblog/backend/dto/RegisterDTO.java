@@ -14,5 +14,10 @@ public class RegisterDTO {
     @Size(min = 6, max = 50, message = "密码长度 6-50 位")
     private String password;
 
+    @NotBlank(message = "nonce不能为空")
+    private String nonce;
+
+    private Long timestamp;
+
     private String email;
 }

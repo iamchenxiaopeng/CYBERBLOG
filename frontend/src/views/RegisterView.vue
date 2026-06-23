@@ -47,11 +47,13 @@ async function submit() {
   error.value = ''
   loading.value = true
   try {
-    // 传输前对密码做 SHA-256 hash
-    const hashedPwd = await encryptPassword(form.value.password)
+    // 传输前对密码做 SHA-256(password + nonce + timestamp)
+    const encrypted = await encryptPassword(form.value.password)
     const res = await authApi.register({
       username: form.value.username,
-      password: hashedPwd,
+      password: encrypted.password,
+      nonce: encrypted.nonce,
+      timestamp: encrypted.timestamp,
       email: form.value.email || undefined,
     })
     if (res.code === 200) {

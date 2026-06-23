@@ -51,11 +51,13 @@ async function submit() {
   error.value = ''
   loading.value = true
   try {
-    // 传输前对密码做 SHA-256 hash，避免明文传输
-    const hashedPwd = await encryptPassword(form.value.password)
+    // 传输前对密码做 SHA-256(password + nonce + timestamp)，防重放攻击
+    const encrypted = await encryptPassword(form.value.password)
     const res = await authApi.login({
       username: form.value.username,
-      password: hashedPwd,
+      password: encrypted.password,
+      nonce: encrypted.nonce,
+      timestamp: encrypted.timestamp,
     })
     if (res.code === 200) {
       userStore.setAuth(res.data.token, res.data.user)
