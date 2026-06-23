@@ -4,6 +4,13 @@
       <div class="cover-overlay"></div>
       <img :src="article.coverImg" :alt="article.title" />
     </div>
+
+    <!-- 编辑/删除按钮：右上角悬浮，hover 显示 -->
+    <div v-if="canEdit || canDelete" class="card-admin-actions">
+      <button v-if="canEdit" class="btn-admin btn-admin-edit" title="编辑" @click.stop.prevent="router.push(`/write/${article.id}`)">✎</button>
+      <button v-if="canDelete" class="btn-admin btn-admin-del" title="删除" @click.stop.prevent="handleDelete">✕</button>
+    </div>
+
     <div class="card-body">
       <!-- 元信息行：作者 + 日期 -->
       <div class="card-meta">
@@ -19,41 +26,21 @@
       <!-- 摘要 -->
       <p class="card-summary">{{ article.summary }}</p>
 
-      <!-- 底部区域：标签 + 统计 + 操作按钮 -->
+      <!-- 底部区域：标签 + 统计（同一行） -->
       <div class="card-footer">
-        <div class="footer-top">
-          <div class="card-tags">
-            <span v-for="tag in parseTags(article.tags)" :key="tag" class="cyber-tag">{{ tag }}</span>
-          </div>
-          <!-- 编辑/删除按钮（hover 时显示） -->
-          <div v-if="canEdit || canDelete" class="card-actions">
-            <button
-              v-if="canEdit"
-              class="btn-card-edit"
-              title="编辑文章"
-              @click.stop.prevent="router.push(`/write/${article.id}`)"
-            >✎</button>
-            <button
-              v-if="canDelete"
-              class="btn-card-delete"
-              title="删除文章"
-              @click.stop.prevent="handleDelete"
-            >✕</button>
-          </div>
+        <div v-if="parseTags(article.tags).length" class="card-tags">
+          <span v-for="tag in parseTags(article.tags)" :key="tag" class="cyber-tag">{{ tag }}</span>
         </div>
-        <div class="footer-bottom card-stats">
-          <span class="stat-item">👁 {{ article.viewCount }}</span>
-          <span
-            :class="['stat-item', 'like-btn']"
-            :style="liked ? { color: 'var(--cyber-red)', textShadow: '0 0 8px rgba(255,50,80,0.4)' } : {}"
-            @click.stop="handleLike"
-          >
-            {{ liked ? '♥' : '♡' }} {{ likeCount }}
+        <div class="card-stats">
+          <span class="stat-item"><i class="stat-icon">👁</i> {{ article.viewCount }}</span>
+          <span :class="['stat-item', 'like-btn']" :style="liked ? { color: 'var(--cyber-red)' } : {}" @click.stop="handleLike">
+            <i class="stat-icon">{{ liked ? '♥' : '♡' }}</i> {{ likeCount }}
           </span>
-          <span class="stat-item">💬 {{ article.commentCount }}</span>
+          <span class="stat-item"><i class="stat-icon">💬</i> {{ article.commentCount }}</span>
         </div>
       </div>
     </div>
+
     <!-- 装饰性边角 -->
     <div class="card-corner card-corner-tl"></div>
     <div class="card-corner card-corner-tr"></div>
@@ -91,6 +78,7 @@ async function handleLike(e: MouseEvent) {
     showToast(e.message || '操作失败', 'error')
   }
 }
+
 // 是否显示删除按钮：已登录 且 (是作者 或 是管理员)
 const canDelete = computed(() => {
   if (!userStore.user) return false
@@ -125,6 +113,9 @@ function parseTags(tags: string) {
 </script>
 
 <style scoped>
+/* ════════════════════════════════
+   ArticleCard — 卡片组件样式
+   ════════════════════════════════ */
 .article-card {
   cursor: pointer;
   overflow: hidden;
@@ -133,252 +124,164 @@ function parseTags(tags: string) {
   flex-direction: column;
 }
 
+/* ── 管理按钮（右上角悬浮，hover 淡入） ── */
+.card-admin-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 15;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: all 0.2s ease;
+}
+.article-card:hover .card-admin-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-admin {
+  width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; border-radius: 3px;
+  cursor: pointer; border: 1px solid transparent;
+  padding: 0; transition: all 0.2s; line-height: 1;
+}
+.btn-admin-edit {
+  color: var(--cyber-primary);
+  background: rgba(0, 245, 255, 0.12);
+  border-color: rgba(0, 245, 255, 0.3);
+}
+.btn-admin-edit:hover {
+  background: var(--cyber-primary); color: var(--cyber-bg);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.4);
+}
+.btn-admin-del {
+  color: var(--cyber-red);
+  background: rgba(255, 50, 80, 0.12);
+  border-color: rgba(255, 50, 80, 0.3);
+}
+.btn-admin-del:hover {
+  background: var(--cyber-red); color: #fff;
+  box-shadow: 0 0 10px rgba(255, 50, 80, 0.4);
+}
+
+/* ── 封面图 ── */
 .card-cover {
-  height: 160px;
+  height: 150px;
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
 }
-
 .card-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.6;
+  width: 100%; height: 100%;
+  object-fit: cover; opacity: 0.6;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .cover-overlay {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background: linear-gradient(180deg, transparent 0%, var(--cyber-bg-card) 100%);
-  z-index: 1;
-  transition: opacity 0.3s;
+  z-index: 1; transition: opacity 0.3s;
 }
+.article-card:hover .card-cover img { opacity: 1; transform: scale(1.08); }
 
-.article-card:hover .card-cover img {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
+/* ── 卡片主体（flex 纵向，等高对齐） ── */
 .card-body {
-  padding: 18px 20px 16px;
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  padding: 16px 18px 14px;
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; flex: 1;
 }
 
-/* ── 元信息行（作者/日期） ── */
+/* ── 作者/日期元信息行 ── */
 .card-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--cyber-text-muted);
-  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--cyber-text-muted); margin-bottom: 7px;
   flex-shrink: 0;
 }
-
-.meta-sep { color: var(--cyber-primary); opacity: 0.6; }
+.meta-sep   { color: var(--cyber-primary); opacity: 0.5; }
 .meta-author { color: var(--cyber-primary); }
 
 /* ── 标题 ── */
 .card-title {
-  font-family: var(--font-cyber);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--cyber-text);
-  margin-bottom: 8px;
-  line-height: 1.45;
-  transition: all 0.3s;
-  flex-shrink: 0;
+  font-family: var(--font-cyber); font-size: 14.5px; font-weight: 700;
+  color: var(--cyber-text); margin-bottom: 7px; line-height: 1.45;
+  transition: all 0.3s; flex-shrink: 0;
 }
-
 .article-card:hover .card-title {
   color: var(--cyber-primary);
-  text-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
+  text-shadow: 0 0 16px rgba(0, 245, 255, 0.4);
 }
 
-/* ── 摘要（弹性填充，保证卡片等高） ── */
+/* ── 摘要（弹性填充，等高） ── */
 .card-summary {
-  font-size: 12px;
-  color: var(--cyber-text-muted);
-  line-height: 1.65;
-  margin-bottom: 14px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  transition: color 0.3s;
-  flex: 1;
-  min-height: 3.3em;
+  font-size: 11.5px; color: var(--cyber-text-muted); line-height: 1.65;
+  margin-bottom: 10px; display: -webkit-box;
+  -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  transition: color 0.3s; flex: 1; min-height: 3em;
 }
+.article-card:hover .card-summary { color: var(--cyber-text); opacity: 0.75; }
 
-.article-card:hover .card-summary {
-  color: var(--cyber-text);
-  opacity: 0.85;
-}
-
-/* ── 底部区域（标签 + 操作 + 统计） ── */
+/* ── 底部栏：标签 | 统计（单行布局） ── */
 .card-footer {
   flex-shrink: 0;
-  border-top: 1px solid rgba(0, 245, 255, 0.08);
-  padding-top: 12px;
-  margin-top: auto;
+  display: flex; align-items: center; gap: 12px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 245, 255, 0.06);
 }
 
-.footer-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-  min-height: 24px;
-}
-
-.footer-bottom {
-  /* stats row */
-}
-
-/* 标签 */
+/* 标签区 */
 .card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-}
-
-/* 操作按钮组（编辑/删除）*/
-.card-actions {
-  display: flex;
-  gap: 6px;
+  display: flex; flex-wrap: wrap; gap: 5px;
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.25s;
+  max-width: 60%;
 }
 
-.article-card:hover .card-actions {
-  opacity: 1;
-}
-
-.btn-card-edit {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--cyber-primary);
-  background: rgba(0, 245, 255, 0.08);
-  border: 1px solid rgba(0, 245, 255, 0.25);
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.25s;
-  padding: 0;
-}
-.btn-card-edit:hover {
-  background: var(--cyber-primary);
-  color: var(--cyber-bg);
-  box-shadow: 0 0 12px rgba(0, 245, 255, 0.5);
-}
-
-.btn-card-delete {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--cyber-red);
-  background: rgba(255, 50, 80, 0.08);
-  border: 1px solid rgba(255, 50, 80, 0.25);
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.25s;
-  padding: 0;
-}
-.btn-card-delete:hover {
-  background: var(--cyber-red);
-  color: #fff;
-  box-shadow: 0 0 12px rgba(255, 50, 80, 0.5);
-}
-
-/* 统计数据 */
+/* 统计数据区（靠右紧凑排列） */
 .card-stats {
-  display: flex;
-  gap: 16px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--cyber-text-muted);
-  opacity: 0.7;
-  transition: opacity 0.3s;
+  display: flex; gap: 11px; margin-left: auto;
+  font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--cyber-text-muted); opacity: 0.5;
+  white-space: nowrap; transition: opacity 0.25s;
 }
+.article-card:hover .card-stats { opacity: 0.85; }
 
-.article-card:hover .card-stats {
-  opacity: 1;
-}
+.stat-item { display: inline-flex; align-items: center; gap: 2.5px; transition: all 0.2s; }
+.stat-icon { font-size: 9.5px; line-height: 1; opacity: 0.7; }
+.article-card:hover .stat-item { color: var(--cyber-primary); }
+.article-card:hover .stat-icon { opacity: 1; }
 
-.stat-item { transition: all 0.3s; }
-
-.article-card:hover .stat-item {
-  color: var(--cyber-primary);
-  text-shadow: 0 0 8px rgba(0, 245, 255, 0.25);
-}
-
-/* 点赞按钮 */
+/* 点赞交互 */
 .like-btn { cursor: pointer; }
-.like-btn:hover {
-  color: var(--cyber-red) !important;
-  text-shadow: 0 0 8px rgba(255, 50, 80, 0.4) !important;
-}
+.like-btn:hover { color: var(--cyber-red) !important; }
 
-/* ── 边角装饰 ── */
+/* ── 边角装饰（hover 时显示） ── */
 .card-corner {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-color: var(--cyber-primary);
-  border-style: solid;
-  opacity: 0;
-  transition: all 0.3s;
-  z-index: 10;
+  position: absolute; width: 18px; height: 18px;
+  border-color: var(--cyber-primary); border-style: solid;
+  opacity: 0; transition: all 0.3s; z-index: 10;
 }
-
 .card-corner-tl { top: 0; left: 0;  border-width: 2px 0 0 2px; }
 .card-corner-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
-.card-corner-bl { bottom: 0; left: 0;  border-width: 0 0 2px 2px; }
+.card-corner-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
 .card-corner-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
 
 .article-card:hover .card-corner { opacity: 1; }
-
 .article-card:hover .card-corner-tl,
 .article-card:hover .card-corner-tr,
 .article-card:hover .card-corner-bl,
-.article-card:hover .card-corner-br {
-  width: 30px; height: 30px;
-}
+.article-card:hover .card-corner-br { width: 26px; height: 26px; }
 
-/* 发光边框效果 */
+/* ── hover 发光边框 ── */
 .article-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
+  content: ''; position: absolute; inset: 0;
   border: 2px solid transparent;
   background: linear-gradient(90deg, var(--cyber-primary), var(--cyber-secondary)) border-box;
   -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
 }
-
 .article-card:hover::after { opacity: 0.5; }
 </style>

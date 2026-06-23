@@ -182,15 +182,23 @@ const canEdit = computed(() => {
   return userStore.user.id === article.value.userId || userStore.user.username === 'admin'
 })
 
-// Setup marked
-marked.setOptions({
-  highlight: (code: string, lang: string) => {
-    if (lang && hljs.getLanguage(lang)) {
-      return hljs.highlight(code, { language: lang }).value
-    }
-    return hljs.highlightAuto(code).value
+// Setup marked with custom code renderer
+const renderer = new marked.Renderer()
+renderer.code = function (code: string, lang: string) {
+  const language = lang || 'code'
+  const displayLang = language.toUpperCase()
+  let highlighted: string
+  if (lang && hljs.getLanguage(lang)) {
+    highlighted = hljs.highlight(code, { language: lang }).value
+  } else {
+    highlighted = hljs.highlightAuto(code).value
   }
-} as any)
+  // Escape code for safe embedding in data attribute
+  const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  return `<pre><div class="code-header"><span class="code-lang">${displayLang}</span><button class="btn-copy-code" data-code="${escapedCode}" onclick="copyCodeBlock(this)">COPY</button></div><code class="hljs language-${language}">${highlighted}</code></pre>`
+}
+
+marked.setOptions({ renderer } as any)
 
 const renderedContent = computed(() => {
   if (!article.value?.content) return ''
@@ -218,6 +226,39 @@ onMounted(async () => {
   }
   window.addEventListener('scroll', handleScroll)
 })
+
+// 注册全局复制代码函数（onclick 需要 window 全局函数）
+function copyCodeBlock(btn: HTMLButtonElement) {
+  const raw = btn.getAttribute('data-code') || ''
+  // 还原 HTML entity
+  const decoded = raw.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  navigator.clipboard.writeText(decoded).then(() => {
+    btn.textContent = '✓ COPIED'
+    btn.classList.add('copied')
+    setTimeout(() => {
+      btn.textContent = 'COPY'
+      btn.classList.remove('copied')
+    }, 2000)
+  }).catch(() => {
+    // Fallback for HTTP environments where clipboard API may not work
+    const textarea = document.createElement('textarea')
+    textarea.value = decoded
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textarea)
+    btn.textContent = '✓ COPIED'
+    btn.classList.add('copied')
+    setTimeout(() => {
+      btn.textContent = 'COPY'
+      btn.classList.remove('copied')
+    }, 2000)
+  })
+}
+// 暴露到 window 以便 onclick 调用
+window.copyCodeBlock = copyCodeBlock
 
 onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 

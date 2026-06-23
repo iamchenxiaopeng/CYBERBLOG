@@ -1,0 +1,121 @@
+/* ============================
+   CyberPunk Highlight.js Theme
+   霓虹赛博风格代码高亮
+   ============================ */
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  background: #0a0e14;
+  color: #e0e8ff;
+}
+
+/* ── 基础文本 ── */
+.hljs,
+.hljs-subst {
+  color: #e0e8ff;  /* var(--cyber-text) */
+}
+
+/* ── 关键字 → 霓虹青 ── */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-type,
+.hljs-tag {
+  color: #00f5ff;
+  font-weight: bold;
+}
+
+/* ── 控制流关键字 → 霓虹青偏亮 ── */
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-built_in,
+.hljs-template-tag,
+.hljs-template-variable {
+  color: #00c8d4;
+}
+
+/* ── 字符串 → 玫红 ── */
+.hljs-string,
+.hljs-doctag,
+.hljs-regexp {
+  color: #ff00ff;
+}
+
+/* ── 数字 → 金黄 ── */
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-meta {
+  color: #ffe600;
+}
+
+/* ── 注释 → 暗灰 ── */
+.hljs-comment,
+.hljs-quote {
+  color: #5c6a7a;
+  font-style: italic;
+}
+
+/* ── 函数/方法 → 绿 ── */
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_,
+.hljs-section {
+  color: #00ff41;
+  font-weight: bold;
+}
+
+/* ── 属性/参数 → 浅紫 ── */
+.hljs-attr,
+.hljs-attribute,
+.hljs-params {
+  color: #c792ea;
+}
+
+/* ── 运算符 → 橙 ── */
+.hljs-operator,
+.hljs-punctuation {
+  color: #ff9e64;
+}
+
+/* ── 装饰器/注解 → 玫红偏浅 ── */
+.hljs-decorator,
+.hljs-meta .hljs-keyword {
+  color: #ff5caa;
+}
+
+/* ── 布尔值/null → 金黄 ── */
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-addition {
+  color: #ffe600;
+}
+
+/* ── 删除/警告 → 红 ── */
+.hljs-deletion {
+  color: #ff2052;
+}
+
+/* ── 内置对象 ── */
+.hljs-meta .hljs-string,
+.hljs-pragma {
+  color: #ff5caa;
+}
+
+/* ── XML/HTML 特殊 ── */
+.hljs-name {
+  color: #00f5ff;
+}
+
+/* ── JSON/YAML key ── */
+.hljs-property {
+  color: #c792ea;
+}
+
+/* ── CSS 颜色值 ── */
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #ff9e64;
+}

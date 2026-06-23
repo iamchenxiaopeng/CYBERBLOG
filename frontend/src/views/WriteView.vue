@@ -173,12 +173,45 @@ const successMsg = ref('')
 const errorMsg = ref('')
 const publishedId = ref<number>(0)
 
-marked.setOptions({
-  highlight: (code: string, lang: string) => {
-    if (lang && hljs.getLanguage(lang)) return hljs.highlight(code, { language: lang }).value
-    return hljs.highlightAuto(code).value
+const writeRenderer = new marked.Renderer()
+writeRenderer.code = function (code: string, lang: string) {
+  const language = lang || 'code'
+  const displayLang = language.toUpperCase()
+  let highlighted: string
+  if (lang && hljs.getLanguage(lang)) {
+    highlighted = hljs.highlight(code, { language: lang }).value
+  } else {
+    highlighted = hljs.highlightAuto(code).value
   }
-} as any)
+  const escapedCode = code.replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  return `<pre><div class="code-header"><span class="code-lang">${displayLang}</span><button class="btn-copy-code" data-code="${escapedCode}" onclick="copyCodeBlock(this)">COPY</button></div><code class="hljs language-${language}">${highlighted}</code></pre>`
+}
+
+marked.setOptions({ renderer: writeRenderer } as any)
+
+// 全局复制函数（WriteView 预览也需要）
+function copyCodeBlock(btn: HTMLButtonElement) {
+  const raw = btn.getAttribute('data-code') || ''
+  const decoded = raw.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  navigator.clipboard.writeText(decoded).then(() => {
+    btn.textContent = '✓ COPIED'
+    btn.classList.add('copied')
+    setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied') }, 2000)
+  }).catch(() => {
+    const textarea = document.createElement('textarea')
+    textarea.value = decoded
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textarea)
+    btn.textContent = '✓ COPIED'
+    btn.classList.add('copied')
+    setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied') }, 2000)
+  })
+}
+window.copyCodeBlock = copyCodeBlock
 
 const previewHtml = computed(() => {
   return writeForm.value.content ? marked(writeForm.value.content) as string : '<p style="color:var(--cyber-text-muted)">// 暂无内容 //</p>'
